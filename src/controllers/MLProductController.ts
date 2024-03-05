@@ -29,20 +29,46 @@ export default class MLProductControllerImpl implements MLProductController {
     }
 
     const data = JSON.parse(results);
-    const mlProduct = new MLProduct(
-      uuidv4(),
-      data.name,
-      data.url,
-      data.price,
-      data.created
-    );
-    try {
-      this.mlProductRepo.initTransaction;
-      this.mlProductRepo.addMLProduct(mlProduct);
-      this.mlProductRepo.commitTransaction();
-    } catch (error: any) {
-      console.error("Error saving MLProduct:", error.message);
-      this.mlProductRepo.rollbackTransaction();
+    console.log(`url: ${data.url}`);
+    const exists = await this.mlProductRepo.productExists(data.url);
+    console.log(`exists: ${exists}`);
+
+    if (!exists) {
+      try {
+        const mlProduct = new MLProduct(
+          uuidv4(),
+          data.name,
+          data.url,
+          data.price,
+          data.created
+        );
+
+        this.mlProductRepo.initTransaction;
+        this.mlProductRepo.addMLProduct(mlProduct);
+        this.mlProductRepo.commitTransaction();
+      } catch (error: any) {
+        console.error("Error saving MLProduct:", error.message);
+        this.mlProductRepo.rollbackTransaction();
+      }
+    } else {
+      try {
+        const product = await this.mlProductRepo.getProductWithUrl(data.url);
+        console.log(product.id);
+        const mlProduct = new MLProduct(
+          product.id,
+          data.name,
+          data.url,
+          data.price,
+          data.created
+        );
+
+        this.mlProductRepo.initTransaction;
+        this.mlProductRepo.addMLProductPrice(mlProduct);
+        this.mlProductRepo.commitTransaction();
+      } catch (error: any) {
+        console.error("Error saving MLProduct:", error.message);
+        this.mlProductRepo.rollbackTransaction();
+      }
     }
   }
 }

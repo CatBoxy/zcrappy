@@ -1,5 +1,8 @@
 import Database from "../persistence/db";
-import { MLProductRepo } from "../interfaces/mlProduct/MLProductRepo";
+import {
+  MLProductRepo,
+  MLProductRow
+} from "../interfaces/mlProduct/MLProductRepo";
 import MLProduct from "../interfaces/mlProduct/MLProduct";
 
 export default class MysqlMLProductRepoImpl implements MLProductRepo {
@@ -34,7 +37,30 @@ export default class MysqlMLProductRepoImpl implements MLProductRepo {
     });
     this.db.insert(this.pricesTable, {
       ml_product_id: mlProductData.id,
-      price: mlProductData.price
+      price: mlProductData.price,
+      created: mlProductData.created
     });
+  }
+
+  public addMLProductPrice(mlProduct: MLProduct): void {
+    const mlProductData = mlProduct.getData();
+
+    this.db.insert(this.pricesTable, {
+      ml_product_id: mlProductData.id,
+      price: mlProductData.price,
+      created: mlProductData.created
+    });
+  }
+
+  public async getProductWithUrl(url: string): Promise<MLProductRow> {
+    const query = `SELECT id, name, url, created FROM ${this.mainTable} WHERE url = ?`;
+    const product = (await this.db.result(query, [url])) as any;
+    return product[0];
+  }
+
+  public async productExists(url: string): Promise<boolean> {
+    const query = `SELECT COUNT(*) as count FROM ${this.mainTable} WHERE url = ?`;
+    const rows = (await this.db.result(query, [url])) as any;
+    return rows[0].count > 0;
   }
 }
