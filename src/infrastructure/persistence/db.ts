@@ -7,9 +7,16 @@ dotenv.config();
 class Database {
   private connection: mysql.Connection | null = null;
   private isInTransaction: boolean = false;
+  private static instance: Database | null;
 
-  constructor() {
-    this.init();
+  constructor() {}
+
+  public static async getInstance(): Promise<Database> {
+    if (!Database.instance) {
+      Database.instance = new Database();
+      await Database.instance.init();
+    }
+    return Database.instance;
   }
 
   private async init() {
@@ -54,8 +61,21 @@ class Database {
           CONSTRAINT \`ml_product_price_FK\` FOREIGN KEY (ml_product_id) REFERENCES \`ml_products\` (id) ON DELETE RESTRICT ON UPDATE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
       `);
+      await this.connection.execute(`
+        CREATE TABLE IF NOT EXISTS \`scheduled_tasks\` (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          product_id VARCHAR(100) NOT NULL,
+          cron_expression VARCHAR(100) NOT NULL,
+          last_run DATETIME,
+          created DATETIME NOT NULL,
+          deleted DATETIME,
+          state VARCHAR(50) NOT NULL,
+          KEY \`product_price_schedule_FK\` (product_id),
+          CONSTRAINT \`product_price_schedule_FK\` FOREIGN KEY (product_id) REFERENCES \`ml_products\` (id) ON DELETE RESTRICT ON UPDATE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+      `);
     } catch (error: any) {
-      console.error("Error creating ml_products table:", error.message);
+      console.error("Error creating tables:", error.message);
     }
   }
 

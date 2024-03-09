@@ -63,4 +63,13 @@ export default class MysqlMLProductRepoImpl implements MLProductRepo {
     const rows = (await this.db.result(query, [url])) as any;
     return rows[0].count > 0;
   }
+
+  public async getProductUrlById(productId: string): Promise<string | null> {
+    const query = `SELECT url FROM ${this.mainTable} WHERE id = ?`;
+    const rows = (await this.db.result(query, [productId])) as any;
+    if (rows.length > 0) {
+      return rows[0].url;
+    }
+    return null;
+  }
 }

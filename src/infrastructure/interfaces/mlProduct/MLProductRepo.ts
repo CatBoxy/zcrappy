@@ -22,4 +22,6 @@ export interface MLProductRepo {
   getProductWithUrl(url: string): Promise<MLProductRow>;
 
   productExists(url: string): Promise<boolean>;
+
+  getProductUrlById(productId: string): Promise<string | null>;
 }
