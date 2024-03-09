@@ -29,9 +29,7 @@ export default class MLProductControllerImpl implements MLProductController {
     }
 
     const data = JSON.parse(results);
-    console.log(`url: ${data.url}`);
     const exists = await this.mlProductRepo.productExists(data.url);
-    console.log(`exists: ${exists}`);
 
     if (!exists) {
       try {
@@ -53,7 +51,6 @@ export default class MLProductControllerImpl implements MLProductController {
     } else {
       try {
         const product = await this.mlProductRepo.getProductWithUrl(data.url);
-        console.log(product.id);
         const mlProduct = new MLProduct(
           product.id,
           data.name,
