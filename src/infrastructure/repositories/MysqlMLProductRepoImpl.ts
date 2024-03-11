@@ -26,20 +26,24 @@ export default class MysqlMLProductRepoImpl implements MLProductRepo {
     this.db.rollback();
   }
 
-  public addMLProduct(mlProduct: MLProduct): void {
+  public async addMLProduct(mlProduct: MLProduct): Promise<void> {
     const mlProductData = mlProduct.getData();
 
-    this.db.insert(this.mainTable, {
-      id: mlProductData.id,
-      name: mlProductData.name,
-      url: mlProductData.url,
-      created: mlProductData.created
-    });
-    this.db.insert(this.pricesTable, {
-      ml_product_id: mlProductData.id,
-      price: mlProductData.price,
-      created: mlProductData.created
-    });
+    try {
+      await this.db.insert(this.mainTable, {
+        id: mlProductData.id,
+        name: mlProductData.name,
+        url: mlProductData.url,
+        created: mlProductData.created
+      });
+      await this.db.insert(this.pricesTable, {
+        ml_product_id: mlProductData.id,
+        price: mlProductData.price,
+        created: mlProductData.created
+      });
+    } catch (error: any) {
+      throw new Error("MLProduct repository error: " + error.message);
+    }
   }
 
   public addMLProductPrice(mlProduct: MLProduct): void {

@@ -102,7 +102,7 @@ class Database {
         console.log(`Inserted ${result.affectedRows} row(s).`);
       }
     } catch (error: any) {
-      console.error("Error inserting:", error.message);
+      throw new Error("Error inserting: " + error.message);
     }
   }
 

@@ -42,11 +42,12 @@ export default class MLProductControllerImpl implements MLProductController {
         );
 
         this.mlProductRepo.initTransaction;
-        this.mlProductRepo.addMLProduct(mlProduct);
+        await this.mlProductRepo.addMLProduct(mlProduct);
         this.mlProductRepo.commitTransaction();
       } catch (error: any) {
         console.error("Error saving MLProduct:", error.message);
         this.mlProductRepo.rollbackTransaction();
+        throw new Error("MLProduct controller error: " + error.message);
       }
     } else {
       try {
