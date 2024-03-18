@@ -33,13 +33,15 @@ class Database {
       await this.createTables();
     } catch (error: any) {
       console.error("Error initializing database connection:", error.message);
+      throw new Error(
+        "Error initializing database connection: " + error.message
+      );
     }
   }
 
   private async createTables() {
     if (!this.connection) {
-      console.error("Database connection not initialized.");
-      return;
+      throw new Error("Database connection not initialized.");
     }
 
     try {
@@ -47,7 +49,7 @@ class Database {
         CREATE TABLE IF NOT EXISTS \`ml_products\` (
           id varchar(100) NOT NULL,
           name varchar(100) NOT NULL,
-          url varchar(200) NOT NULL,
+          url varchar(1000) NOT NULL,
           created datetime NOT NULL,
           PRIMARY KEY (id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -76,11 +78,15 @@ class Database {
       `);
     } catch (error: any) {
       console.error("Error creating tables:", error.message);
+      throw new Error("Error creating tables: " + error.message);
     }
   }
 
   public async insert(table: string, fields: Record<string, any>) {
     try {
+      if (!this.connection) {
+        throw new Error("Database connection not initialized.");
+      }
       const placeholders: string[] = [];
       const values: any[] = Object.values(fields);
       const fieldNames: string[] = Object.keys(fields);
@@ -109,8 +115,7 @@ class Database {
   public async initTransaction() {
     try {
       if (!this.connection) {
-        console.error("Database connection not initialized.");
-        return;
+        throw new Error("Database connection not initialized.");
       }
 
       await this.connection.beginTransaction();
@@ -118,14 +123,14 @@ class Database {
       console.log("Transaction started.");
     } catch (error: any) {
       console.error("Error initiating transaction:", error.message);
+      throw new Error("Error initiating transaction: " + error.message);
     }
   }
 
   public async commit() {
     try {
       if (!this.connection) {
-        console.error("Database connection not initialized.");
-        return;
+        throw new Error("Database connection not initialized.");
       }
 
       await this.connection.commit();
@@ -133,14 +138,14 @@ class Database {
       console.log("Transaction committed.");
     } catch (error: any) {
       console.error("Error committing transaction:", error.message);
+      throw new Error("Error committing transaction: " + error.message);
     }
   }
 
   public async rollback() {
     try {
       if (!this.connection) {
-        console.error("Database connection not initialized.");
-        return;
+        throw new Error("Database connection not initialized.");
       }
 
       await this.connection.rollback();
@@ -148,14 +153,14 @@ class Database {
       console.log("Transaction rolled back.");
     } catch (error: any) {
       console.error("Error rolling back transaction:", error.message);
+      throw new Error("Error rolling back transaction: " + error.message);
     }
   }
 
   public async execute(sql: string, values: any[] | null = null) {
     try {
       if (!this.connection) {
-        console.error("Database connection not initialized.");
-        return;
+        throw new Error("Database connection not initialized.");
       }
 
       if (values === null) {
@@ -166,6 +171,7 @@ class Database {
       await this.connection.execute(sql, values);
     } catch (error: any) {
       console.error("Error executing SQL:", error.message);
+      throw new Error("Error executing SQL: " + error.message);
     }
   }
 
@@ -182,6 +188,7 @@ class Database {
         this.rollback();
       }
       console.log("Error executing transaction:", error.message);
+      throw new Error("Error executing transaction: " + error.message);
     }
   }
 
@@ -200,7 +207,7 @@ class Database {
       return rows;
     } catch (error: any) {
       console.error("Error executing ordered query:", error.message);
-      throw error;
+      throw new Error("Error executing ordered query: " + error.message);
     }
   }
 

@@ -25,7 +25,9 @@ export default class MLProductControllerImpl implements MLProductController {
     }
     if (!results) {
       console.log("Failed to get script results");
-      return;
+      throw new Error(
+        "MLProduct controller error: Failed to get script results"
+      );
     }
 
     const data = JSON.parse(results);
@@ -66,6 +68,7 @@ export default class MLProductControllerImpl implements MLProductController {
       } catch (error: any) {
         console.error("Error saving MLProduct:", error.message);
         this.mlProductRepo.rollbackTransaction();
+        throw new Error("MLProduct controller error: " + error.message);
       }
     }
   }

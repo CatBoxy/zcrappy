@@ -47,33 +47,49 @@ export default class MysqlMLProductRepoImpl implements MLProductRepo {
   }
 
   public addMLProductPrice(mlProduct: MLProduct): void {
-    const mlProductData = mlProduct.getData();
+    try {
+      const mlProductData = mlProduct.getData();
 
-    this.db.insert(this.pricesTable, {
-      ml_product_id: mlProductData.id,
-      price: mlProductData.price,
-      created: mlProductData.created
-    });
+      this.db.insert(this.pricesTable, {
+        ml_product_id: mlProductData.id,
+        price: mlProductData.price,
+        created: mlProductData.created
+      });
+    } catch (error: any) {
+      throw new Error("MLProduct repository error: " + error.message);
+    }
   }
 
   public async getProductWithUrl(url: string): Promise<MLProductRow> {
-    const query = `SELECT id, name, url, created FROM ${this.mainTable} WHERE url = ?`;
-    const product = (await this.db.result(query, [url])) as any;
-    return product[0];
+    try {
+      const query = `SELECT id, name, url, created FROM ${this.mainTable} WHERE url = ?`;
+      const product = (await this.db.result(query, [url])) as any;
+      return product[0];
+    } catch (error: any) {
+      throw new Error("MLProduct repository error: " + error.message);
+    }
   }
 
   public async productExists(url: string): Promise<boolean> {
-    const query = `SELECT COUNT(*) as count FROM ${this.mainTable} WHERE url = ?`;
-    const rows = (await this.db.result(query, [url])) as any;
-    return rows[0].count > 0;
+    try {
+      const query = `SELECT COUNT(*) as count FROM ${this.mainTable} WHERE url = ?`;
+      const rows = (await this.db.result(query, [url])) as any;
+      return rows[0].count > 0;
+    } catch (error: any) {
+      throw new Error("MLProduct repository error: " + error.message);
+    }
   }
 
   public async getProductUrlById(productId: string): Promise<string | null> {
-    const query = `SELECT url FROM ${this.mainTable} WHERE id = ?`;
-    const rows = (await this.db.result(query, [productId])) as any;
-    if (rows.length > 0) {
-      return rows[0].url;
+    try {
+      const query = `SELECT url FROM ${this.mainTable} WHERE id = ?`;
+      const rows = (await this.db.result(query, [productId])) as any;
+      if (rows.length > 0) {
+        return rows[0].url;
+      }
+      return null;
+    } catch (error: any) {
+      throw new Error("MLProduct repository error: " + error.message);
     }
-    return null;
   }
 }

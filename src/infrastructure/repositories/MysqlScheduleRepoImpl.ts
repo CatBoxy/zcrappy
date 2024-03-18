@@ -23,20 +23,28 @@ export default class MysqlScheduleRepoImpl implements ScheduleRepo {
   }
 
   public addSchedule(schedule: Schedule): void {
-    const scheduleData = schedule.getData();
+    try {
+      const scheduleData = schedule.getData();
 
-    this.db.insert(this.mainTable, {
-      product_id: scheduleData.productId,
-      cron_expression: scheduleData.cronExpression,
-      created: scheduleData.created,
-      state: scheduleData.state
-    });
+      this.db.insert(this.mainTable, {
+        product_id: scheduleData.productId,
+        cron_expression: scheduleData.cronExpression,
+        created: scheduleData.created,
+        state: scheduleData.state
+      });
+    } catch (error: any) {
+      throw new Error("Schedule repository error: " + error.message);
+    }
   }
 
   public async getAllSchedules(): Promise<Array<ScheduleRow>> {
-    const query = `SELECT product_id, cron_expression FROM scheduled_tasks`;
-    const scheduleRows = (await this.db.result(query)) as any;
-    return scheduleRows;
+    try {
+      const query = `SELECT product_id, cron_expression FROM scheduled_tasks`;
+      const scheduleRows = (await this.db.result(query)) as any;
+      return scheduleRows;
+    } catch (error: any) {
+      throw new Error("Schedule repository error: " + error.message);
+    }
   }
 
   public updateLastRun(schedule: Schedule): void {

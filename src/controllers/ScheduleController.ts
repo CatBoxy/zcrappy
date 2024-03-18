@@ -35,10 +35,11 @@ export default class ScheduleControllerImpl implements ScheduleController {
     } catch (error: any) {
       console.error("Error saving schedule:", error.message);
       this.scheduleRepo.rollbackTransaction();
+      throw new Error("Schedule controller error: " + error.message);
     }
   }
 
   public async initSchedule(productId: string, cronExpression: string) {
-    initializeSchedule(productId, cronExpression);
+    await initializeSchedule(productId, cronExpression);
   }
 }
