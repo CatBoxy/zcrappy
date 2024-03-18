@@ -2,15 +2,15 @@ export default class MLProduct {
   public id;
   public name;
   public url;
-  public price;
+  public price?;
   public created;
 
   constructor(
     id: string,
     name: string,
     url: string,
-    price: string,
-    created: Date
+    created: Date,
+    price?: string
   ) {
     this.id = id;
     this.name = name;

@@ -27,6 +27,19 @@ router.get("/mlProduct", async (req: Request, res: Response) => {
   }
 });
 
+router.get("/mlProducts", async (req: Request, res: Response) => {
+  const db = await Database.getInstance();
+  const mlProductRepo = new MysqlMLProductRepoImpl(db);
+  const mlProductController = new MLProductController(mlProductRepo);
+  try {
+    const products = await mlProductController.getAll();
+    res.json(products);
+  } catch (error) {
+    console.error("Error getting all products:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 router.get("/schedule/:productId", async (req: Request, res: Response) => {
   const db = await Database.getInstance();
   const scheduleRepo = new MysqlScheduleRepoImpl(db);

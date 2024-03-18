@@ -6,6 +6,7 @@ export interface MLProductRow extends RowDataPacket {
   name: string;
   url: string;
   created: Date;
+  price?: string;
 }
 
 export interface MLProductRepo {
@@ -24,4 +25,6 @@ export interface MLProductRepo {
   productExists(url: string): Promise<boolean>;
 
   getProductUrlById(productId: string): Promise<string | null>;
+
+  getAllProducts(): Promise<Array<MLProductRow>>;
 }

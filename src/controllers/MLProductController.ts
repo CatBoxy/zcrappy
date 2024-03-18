@@ -6,6 +6,7 @@ import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
 
 interface MLProductController {
   run(filename: string, query: string): Promise<void>;
+  getAll(): Promise<Array<MLProduct>>;
 }
 
 export default class MLProductControllerImpl implements MLProductController {
@@ -39,8 +40,8 @@ export default class MLProductControllerImpl implements MLProductController {
           uuidv4(),
           data.name,
           data.url,
-          data.price,
-          data.created
+          data.created,
+          data.price
         );
 
         this.mlProductRepo.initTransaction;
@@ -58,8 +59,8 @@ export default class MLProductControllerImpl implements MLProductController {
           product.id,
           data.name,
           data.url,
-          data.price,
-          data.created
+          data.created,
+          data.price
         );
 
         this.mlProductRepo.initTransaction;
@@ -70,6 +71,20 @@ export default class MLProductControllerImpl implements MLProductController {
         this.mlProductRepo.rollbackTransaction();
         throw new Error("MLProduct controller error: " + error.message);
       }
+    }
+  }
+
+  public async getAll(): Promise<Array<MLProduct>> {
+    try {
+      const productRows = await this.mlProductRepo.getAllProducts();
+      const products = productRows.map((row) => {
+        return new MLProduct(row.id, row.name, row.url, row.created, row.price);
+      });
+
+      return products;
+    } catch (error: any) {
+      console.error("Error getting MLProducts:", error.message);
+      throw new Error("MLProduct controller error: " + error.message);
     }
   }
 }

@@ -92,4 +92,23 @@ export default class MysqlMLProductRepoImpl implements MLProductRepo {
       throw new Error("MLProduct repository error: " + error.message);
     }
   }
+
+  public async getAllProducts(): Promise<Array<MLProductRow>> {
+    try {
+      const query = `SELECT p.id, p.name, p.url, p.created, pp.price, pp.created
+      FROM ${this.mainTable} p
+      JOIN ${this.pricesTable} pp ON p.id = pp.ml_product_id
+      WHERE pp.created = (
+          SELECT MAX(pp2.created)
+          FROM ${this.pricesTable} pp2
+          WHERE pp2.ml_product_id = p.id
+      )
+      ORDER BY p.created DESC;`;
+      const rows = (await this.db.result(query)) as any;
+
+      return rows;
+    } catch (error: any) {
+      throw new Error("MLProduct repository error: " + error.message);
+    }
+  }
 }
