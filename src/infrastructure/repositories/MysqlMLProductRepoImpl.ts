@@ -95,13 +95,31 @@ export default class MysqlMLProductRepoImpl implements MLProductRepo {
 
   public async getAllProducts(): Promise<Array<MLProductRow>> {
     try {
-      const query = `SELECT p.id, p.name, p.url, p.created, pp.price, pp.created
+      const query = `SELECT p.id, p.name, p.url, p.created, pp.price, pp.created AS updated, st.state,
+      IFNULL(((pp.price - prev_pp.price) / prev_pp.price) * 100, 0) AS percentChange,
+      CASE
+        WHEN pp.price > prev_pp.price THEN 'increase'
+        WHEN pp.price < prev_pp.price THEN 'decrease'
+        ELSE 'stable'
+      END AS changeDirection
       FROM ${this.mainTable} p
       JOIN ${this.pricesTable} pp ON p.id = pp.ml_product_id
-      WHERE pp.created = (
+      LEFT JOIN scheduled_tasks st ON p.id = st.product_id
+      LEFT JOIN (
+        SELECT pp1.ml_product_id, pp1.price
+        FROM ${this.pricesTable} pp1
+        WHERE pp1.created < (
           SELECT MAX(pp2.created)
           FROM ${this.pricesTable} pp2
-          WHERE pp2.ml_product_id = p.id
+          WHERE pp2.ml_product_id = pp1.ml_product_id
+        )
+        ORDER BY pp1.created DESC
+        LIMIT 1
+      ) prev_pp ON p.id = prev_pp.ml_product_id
+      WHERE pp.created = (
+        SELECT MAX(pp2.created)
+        FROM ${this.pricesTable} pp2
+        WHERE pp2.ml_product_id = p.id
       )
       ORDER BY p.created DESC;`;
       const rows = (await this.db.result(query)) as any;

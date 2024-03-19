@@ -1,11 +1,17 @@
 import { RowDataPacket } from "mysql2/promise";
 import MLProduct from "./MLProduct";
+import { ScheduleState } from "../../../enums/ScheduleState";
+import { ChangeDirection } from "../../../enums/ChangeDirection";
 
 export interface MLProductRow extends RowDataPacket {
   id: string;
   name: string;
   url: string;
   created: Date;
+  updated: Date;
+  percentChange: number;
+  changeDirection: keyof typeof ChangeDirection;
+  state?: keyof typeof ScheduleState;
   price?: string;
 }
 

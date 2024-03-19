@@ -3,6 +3,8 @@ import { v4 as uuidv4 } from "uuid";
 import MLProduct from "../infrastructure/interfaces/mlProduct/MLProduct";
 import { MLProductRepo } from "../infrastructure/interfaces/mlProduct/MLProductRepo";
 import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
+import { ScheduleState } from "../enums/ScheduleState";
+import { ChangeDirection } from "../enums/ChangeDirection";
 
 interface MLProductController {
   run(filename: string, query: string): Promise<void>;
@@ -41,7 +43,11 @@ export default class MLProductControllerImpl implements MLProductController {
           data.name,
           data.url,
           data.created,
-          data.price
+          ScheduleState.Stopped,
+          0,
+          ChangeDirection.Stable,
+          data.price,
+          undefined
         );
 
         this.mlProductRepo.initTransaction;
@@ -60,7 +66,11 @@ export default class MLProductControllerImpl implements MLProductController {
           data.name,
           data.url,
           data.created,
-          data.price
+          ScheduleState.Stopped,
+          0,
+          ChangeDirection.Stable,
+          data.price,
+          undefined
         );
 
         this.mlProductRepo.initTransaction;
@@ -78,7 +88,18 @@ export default class MLProductControllerImpl implements MLProductController {
     try {
       const productRows = await this.mlProductRepo.getAllProducts();
       const products = productRows.map((row) => {
-        return new MLProduct(row.id, row.name, row.url, row.created, row.price);
+        const state = row.state ? row.state : ScheduleState.Stopped;
+        return new MLProduct(
+          row.id,
+          row.name,
+          row.url,
+          row.created,
+          state,
+          row.percentChange,
+          row.changeDirection,
+          row.price,
+          row.updated
+        );
       });
 
       return products;
