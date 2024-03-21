@@ -32,7 +32,8 @@ router.get("/mlProducts", async (req: Request, res: Response) => {
   const mlProductRepo = new MysqlMLProductRepoImpl(db);
   const mlProductController = new MLProductController(mlProductRepo);
   try {
-    const products = await mlProductController.getAll();
+    const products = await mlProductController.getAllData();
+
     res.json(products);
   } catch (error) {
     console.error("Error getting all products:", error);

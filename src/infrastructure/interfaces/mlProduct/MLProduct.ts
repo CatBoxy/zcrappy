@@ -1,4 +1,6 @@
 import { ScheduleState } from "../../../enums/ScheduleState";
+import { Money } from "../../valueObjects/Money";
+import { PercentChange } from "../../valueObjects/PercentChange";
 
 export default class MLProduct {
   public id;
@@ -6,9 +8,9 @@ export default class MLProduct {
   public url;
   public created;
   public state;
-  public percentChange;
+  public percentChange: PercentChange;
   public changeDirection;
-  public price?;
+  public price?: Money;
   public updated?;
 
   constructor(
@@ -27,9 +29,9 @@ export default class MLProduct {
     this.url = url;
     this.created = created;
     this.state = state;
-    this.percentChange = percentChange;
+    this.percentChange = new PercentChange(percentChange);
     this.changeDirection = changeDirection;
-    this.price = price;
+    this.price = price ? new Money(price) : undefined;
     this.updated = updated;
   }
 
@@ -40,9 +42,9 @@ export default class MLProduct {
       url: this.url,
       created: this.created,
       state: this.state,
-      percentChange: this.percentChange,
+      percentChange: this.percentChange.getPercentage(),
       changeDirection: this.changeDirection,
-      price: this.price,
+      price: this.price?.getAmount(),
       updated: this.updated
     };
   }

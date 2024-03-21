@@ -9,6 +9,7 @@ import { ChangeDirection } from "../enums/ChangeDirection";
 interface MLProductController {
   run(filename: string, query: string): Promise<void>;
   getAll(): Promise<Array<MLProduct>>;
+  getAllData(): Promise<Record<string, any>[]>;
 }
 
 export default class MLProductControllerImpl implements MLProductController {
@@ -105,6 +106,20 @@ export default class MLProductControllerImpl implements MLProductController {
       return products;
     } catch (error: any) {
       console.error("Error getting MLProducts:", error.message);
+      throw new Error("MLProduct controller error: " + error.message);
+    }
+  }
+
+  public async getAllData(): Promise<Record<string, any>[]> {
+    try {
+      const products = await this.getAll();
+      const productData = products.map((product) => {
+        return product.getData();
+      });
+
+      return productData;
+    } catch (error: any) {
+      console.error("Error getting MLProducts data:", error.message);
       throw new Error("MLProduct controller error: " + error.message);
     }
   }
