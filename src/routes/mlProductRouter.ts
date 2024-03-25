@@ -14,13 +14,13 @@ router.get("/mlProduct", async (req: Request, res: Response) => {
   const filename = "mLProduct.py";
   try {
     const { url } = req.query;
-
+    let product;
     if (typeof url === "string") {
-      await mlProductController.run(filename, url);
+      product = await mlProductController.run(filename, url);
     } else {
-      await mlProductController.run(filename);
+      product = await mlProductController.run(filename);
     }
-    res.json({ message: "Script executed successfully" });
+    res.json({ message: "Product added successfully", name: product.name });
   } catch (error) {
     console.error("Error executing script:", error);
     res.status(500).json({ error: "Internal Server Error" });
