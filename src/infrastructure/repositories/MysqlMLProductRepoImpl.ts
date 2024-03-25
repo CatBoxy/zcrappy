@@ -96,12 +96,7 @@ export default class MysqlMLProductRepoImpl implements MLProductRepo {
   public async getAllProducts(): Promise<Array<MLProductRow>> {
     try {
       const query = `SELECT p.id, p.name, p.url, p.created, pp.price, pp.created AS updated, st.state,
-      IFNULL(((pp.price - prev_pp.price) / prev_pp.price) * 100, 0) AS percentChange,
-      CASE
-        WHEN pp.price > prev_pp.price THEN 'increase'
-        WHEN pp.price < prev_pp.price THEN 'decrease'
-        ELSE 'stable'
-      END AS changeDirection
+      IFNULL(((pp.price - prev_pp.price) / prev_pp.price) * 100, 0) AS percentChange
       FROM ${this.mainTable} p
       JOIN ${this.pricesTable} pp ON p.id = pp.ml_product_id
       LEFT JOIN scheduled_tasks st ON p.id = st.product_id

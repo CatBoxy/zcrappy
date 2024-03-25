@@ -4,10 +4,9 @@ import MLProduct from "../infrastructure/interfaces/mlProduct/MLProduct";
 import { MLProductRepo } from "../infrastructure/interfaces/mlProduct/MLProductRepo";
 import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
 import { ScheduleState } from "../enums/ScheduleState";
-import { ChangeDirection } from "../enums/ChangeDirection";
 
 interface MLProductController {
-  run(filename: string, query: string): Promise<void>;
+  run(filename: string, query: string): Promise<Record<string, string>>;
   getAll(): Promise<Array<MLProduct>>;
   getAllData(): Promise<Record<string, any>[]>;
 }
@@ -20,7 +19,10 @@ export default class MLProductControllerImpl implements MLProductController {
     this.mlProductRepo = mlProductRepo;
   }
 
-  public async run(fileName: string, query?: string): Promise<void> {
+  public async run(
+    fileName: string,
+    query?: string
+  ): Promise<Record<string, any>> {
     let results;
     if (query) {
       results = await this.manager.runScript(fileName, [query]);
@@ -46,7 +48,6 @@ export default class MLProductControllerImpl implements MLProductController {
           data.created,
           ScheduleState.Stopped,
           0,
-          ChangeDirection.Stable,
           data.price,
           undefined
         );
@@ -54,6 +55,7 @@ export default class MLProductControllerImpl implements MLProductController {
         this.mlProductRepo.initTransaction;
         await this.mlProductRepo.addMLProduct(mlProduct);
         this.mlProductRepo.commitTransaction();
+        return mlProduct.getData();
       } catch (error: any) {
         console.error("Error saving MLProduct:", error.message);
         this.mlProductRepo.rollbackTransaction();
@@ -69,7 +71,6 @@ export default class MLProductControllerImpl implements MLProductController {
           data.created,
           ScheduleState.Stopped,
           0,
-          ChangeDirection.Stable,
           data.price,
           undefined
         );
@@ -77,6 +78,7 @@ export default class MLProductControllerImpl implements MLProductController {
         this.mlProductRepo.initTransaction;
         this.mlProductRepo.addMLProductPrice(mlProduct);
         this.mlProductRepo.commitTransaction();
+        return mlProduct.getData();
       } catch (error: any) {
         console.error("Error saving MLProduct:", error.message);
         this.mlProductRepo.rollbackTransaction();
@@ -97,12 +99,10 @@ export default class MLProductControllerImpl implements MLProductController {
           row.created,
           state,
           row.percentChange,
-          row.changeDirection,
           row.price,
           row.updated
         );
       });
-
       return products;
     } catch (error: any) {
       console.error("Error getting MLProducts:", error.message);

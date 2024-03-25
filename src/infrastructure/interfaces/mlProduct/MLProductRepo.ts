@@ -10,7 +10,6 @@ export interface MLProductRow extends RowDataPacket {
   created: Date;
   updated: Date;
   percentChange: number;
-  changeDirection: keyof typeof ChangeDirection;
   state?: keyof typeof ScheduleState;
   price?: string;
 }

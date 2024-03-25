@@ -9,7 +9,6 @@ export default class MLProduct {
   public created;
   public state;
   public percentChange: PercentChange;
-  public changeDirection;
   public price?: Money;
   public updated?;
 
@@ -20,7 +19,6 @@ export default class MLProduct {
     created: Date,
     state: keyof typeof ScheduleState,
     percentChange: number,
-    changeDirection: string,
     price?: string,
     updated?: Date
   ) {
@@ -30,7 +28,6 @@ export default class MLProduct {
     this.created = created;
     this.state = state;
     this.percentChange = new PercentChange(percentChange);
-    this.changeDirection = changeDirection;
     this.price = price ? new Money(price) : undefined;
     this.updated = updated;
   }
@@ -43,7 +40,7 @@ export default class MLProduct {
       created: this.created,
       state: this.state,
       percentChange: this.percentChange.getPercentage(),
-      changeDirection: this.changeDirection,
+      changeDirection: this.percentChange.getChangeDirection(),
       price: this.price?.getAmount(),
       updated: this.updated
     };
