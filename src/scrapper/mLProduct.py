@@ -1,47 +1,57 @@
-import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from datetime import datetime
+from bs4 import BeautifulSoup
+import requests
 import json
 import sys
-import os
-from datetime import datetime
 
-chrome_options = Options()
+def extract_product_info(url):
+    try:
+        initial_response = requests.get(url)
+        initial_response.raise_for_status()
 
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
+        response = requests.get(url)
+        response.raise_for_status()
 
-service = Service(executable_path="/usr/local/bin/chromedriver/chromedriver")
-driver = webdriver.Chrome(service=service, options=chrome_options)
+        soup = BeautifulSoup(response.content, 'html.parser')
 
-url = sys.argv[1]
+        product_price = None
+        product_name = None
+        current_utc_datetime = datetime.utcnow().isoformat()
 
-driver.get(url)
+        for script_tag in soup.find_all('script'):
+            script_content = script_tag.string
+            if script_content and script_content.strip():
+                try:
+                    json_data = json.loads(script_content)
+                    if "offers" in json_data and "price" in json_data["offers"]:
+                        product_price = json_data["offers"]["price"]
+                    if "name" in json_data:
+                        product_name = json_data["name"]
+                        break
+                except json.JSONDecodeError:
+                    continue
 
-WebDriverWait(driver, 5).until(
-  EC.presence_of_element_located((By.CLASS_NAME, "andes-money-amount__fraction"))
-)
+        if product_price is not None and product_name is not None:
+            return {
+                "name": product_name,
+                "url": url,
+                "price": product_price,
+                "created": current_utc_datetime
+            }
+        else:
+            raise ValueError("Price or Name parameters not found in any script tag.")
+    except (requests.RequestException, ValueError) as e:
+        print(f"Error occurred: {e}")
+        return None
 
-price_element = driver.find_element(By.CLASS_NAME, "andes-money-amount__fraction")
-title_element = driver.find_element(By.CLASS_NAME, "ui-pdp-title")
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python file.py <URL>")
+        sys.exit(1)
 
-time.sleep(5)
-
-file_name = os.path.basename(__file__)
-current_utc_datetime = datetime.utcnow().isoformat()
-
-data = {
-    "name": title_element.text,
-    "url": url,
-    "price": price_element.text,
-    "created": current_utc_datetime
-}
-
-print(json.dumps(data))
-
-driver.quit()
+    url = sys.argv[1]
+    product_info = extract_product_info(url)
+    if product_info:
+        print(json.dumps(product_info))
+    else:
+        print("Failed to extract product information.")
