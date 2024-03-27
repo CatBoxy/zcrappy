@@ -24,6 +24,7 @@ class ScriptManagerImpl implements ScriptManager {
           resolve(results);
         })
         .catch((err: any) => {
+          console.error("Error running Python script:", err);
           reject(err);
         });
     });

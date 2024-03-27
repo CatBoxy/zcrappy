@@ -4,28 +4,33 @@ import Database from "../infrastructure/persistence/db";
 import MysqlMLProductRepoImpl from "../infrastructure/repositories/MysqlMLProductRepoImpl";
 import MysqlScheduleRepoImpl from "../infrastructure/repositories/MysqlScheduleRepoImpl";
 import ScheduleController from "../controllers/ScheduleController";
+import { mlProductUrlValidations } from "../middlewares/mlProductValidations";
 
 const router = Router();
 
-router.get("/mlProduct", async (req: Request, res: Response) => {
-  const db = await Database.getInstance();
-  const mlProductRepo = new MysqlMLProductRepoImpl(db);
-  const mlProductController = new MLProductController(mlProductRepo);
-  const filename = "mLProduct.py";
-  try {
-    const { url } = req.query;
-    let product;
-    if (typeof url === "string") {
-      product = await mlProductController.run(filename, url);
-    } else {
-      product = await mlProductController.run(filename);
+router.get(
+  "/mlProduct",
+  mlProductUrlValidations,
+  async (req: Request, res: Response) => {
+    const db = await Database.getInstance();
+    const mlProductRepo = new MysqlMLProductRepoImpl(db);
+    const mlProductController = new MLProductController(mlProductRepo);
+    const filename = "mLProduct.py";
+    try {
+      const { url } = req.query;
+      let product;
+      if (typeof url === "string") {
+        product = await mlProductController.run(filename, url);
+      } else {
+        product = await mlProductController.run(filename);
+      }
+      res.json({ message: "Product added successfully", name: product.name });
+    } catch (error) {
+      console.error("Error executing script:", error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
-    res.json({ message: "Product added successfully", name: product.name });
-  } catch (error) {
-    console.error("Error executing script:", error);
-    res.status(500).json({ error: "Internal Server Error" });
   }
-});
+);
 
 router.get("/mlProducts", async (req: Request, res: Response) => {
   const db = await Database.getInstance();
