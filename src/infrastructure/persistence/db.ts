@@ -57,7 +57,7 @@ class Database {
       await this.connection.execute(`
         CREATE TABLE IF NOT EXISTS \`ml_product_prices\` (
           ml_product_id varchar(100) NOT NULL,
-          price varchar(100) NOT NULL,
+          price DOUBLE NOT NULL,
           created datetime NOT NULL,
           KEY \`ml_product_price_FK\` (ml_product_id),
           CONSTRAINT \`ml_product_price_FK\` FOREIGN KEY (ml_product_id) REFERENCES \`ml_products\` (id) ON DELETE RESTRICT ON UPDATE RESTRICT

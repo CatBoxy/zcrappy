@@ -1,7 +1,6 @@
 import { RowDataPacket } from "mysql2/promise";
 import MLProduct from "./MLProduct";
 import { ScheduleState } from "../../../enums/ScheduleState";
-import { ChangeDirection } from "../../../enums/ChangeDirection";
 
 export interface MLProductRow extends RowDataPacket {
   id: string;
@@ -9,9 +8,10 @@ export interface MLProductRow extends RowDataPacket {
   url: string;
   created: Date;
   updated: Date;
-  percentChange: number;
   state?: keyof typeof ScheduleState;
-  price?: string;
+  price?: number;
+  previous_price?: number;
+  previous_updated?: Date;
 }
 
 export interface MLProductRepo {

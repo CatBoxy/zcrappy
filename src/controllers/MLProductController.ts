@@ -47,17 +47,15 @@ export default class MLProductControllerImpl implements MLProductController {
           data.url,
           data.created,
           ScheduleState.Stopped,
-          0,
+          undefined,
           data.price,
           undefined
         );
-
         this.mlProductRepo.initTransaction;
         await this.mlProductRepo.addMLProduct(mlProduct);
         this.mlProductRepo.commitTransaction();
         return mlProduct.getData();
       } catch (error: any) {
-        console.error("Error saving MLProduct:", error.message);
         this.mlProductRepo.rollbackTransaction();
         throw new Error("MLProduct controller error: " + error.message);
       }
@@ -70,7 +68,7 @@ export default class MLProductControllerImpl implements MLProductController {
           data.url,
           data.created,
           ScheduleState.Stopped,
-          0,
+          undefined,
           data.price,
           undefined
         );
@@ -80,7 +78,6 @@ export default class MLProductControllerImpl implements MLProductController {
         this.mlProductRepo.commitTransaction();
         return mlProduct.getData();
       } catch (error: any) {
-        console.error("Error saving MLProduct:", error.message);
         this.mlProductRepo.rollbackTransaction();
         throw new Error("MLProduct controller error: " + error.message);
       }
@@ -98,7 +95,7 @@ export default class MLProductControllerImpl implements MLProductController {
           row.url,
           row.created,
           state,
-          row.percentChange,
+          row.previous_price,
           row.price,
           row.updated
         );

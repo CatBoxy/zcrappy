@@ -4,8 +4,9 @@ export class PercentChange {
   private percentage: number;
   private changeDirection: keyof typeof ChangeDirection;
 
-  constructor(amount: number) {
-    this.percentage = Math.ceil(amount);
+  constructor(price?: number, previousPrice?: number) {
+    this.percentage =
+      price && previousPrice ? this.calcPercent(price, previousPrice) : 0;
     this.changeDirection =
       this.percentage === 0
         ? ChangeDirection.Stable
@@ -20,5 +21,11 @@ export class PercentChange {
 
   public getChangeDirection(): string {
     return this.changeDirection;
+  }
+
+  private calcPercent(price: number, previousPrice: number): number {
+    const percent = ((price - previousPrice) / previousPrice) * 100;
+    const rounded = Math.ceil(percent * Math.pow(10, 2)) / Math.pow(10, 2);
+    return rounded;
   }
 }

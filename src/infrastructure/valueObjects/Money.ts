@@ -1,15 +1,15 @@
-export class Money {
-  private amount: string;
+// export class Money {
+//   private amount: number;
 
-  constructor(amount: string) {
-    this.amount = this.sanitizeAmount(amount);
-  }
+//   constructor(amount: number) {
+//     this.amount = this.sanitizeAmount(amount);
+//   }
 
-  private sanitizeAmount(amount: string): string {
-    return amount.replace(/\./g, "");
-  }
+//   // private sanitizeAmount(amount: number): number {
+//   //   return amount.replace(/\./g, ",");
+//   // }
 
-  public getAmount(): string {
-    return this.amount;
-  }
-}
+//   // public getAmount(): string {
+//   //   return this.amount;
+//   // }
+// }

@@ -1,5 +1,5 @@
 import { ScheduleState } from "../../../enums/ScheduleState";
-import { Money } from "../../valueObjects/Money";
+// import { Money } from "../../valueObjects/Money";
 import { PercentChange } from "../../valueObjects/PercentChange";
 
 export default class MLProduct {
@@ -8,8 +8,8 @@ export default class MLProduct {
   public url;
   public created;
   public state;
-  public percentChange: PercentChange;
-  public price?: Money;
+  public previousPrice?: number;
+  public price?: number;
   public updated?;
 
   constructor(
@@ -18,8 +18,8 @@ export default class MLProduct {
     url: string,
     created: Date,
     state: keyof typeof ScheduleState,
-    percentChange: number,
-    price?: string,
+    previousPrice?: number,
+    price?: number,
     updated?: Date
   ) {
     this.id = id;
@@ -27,21 +27,22 @@ export default class MLProduct {
     this.url = url;
     this.created = created;
     this.state = state;
-    this.percentChange = new PercentChange(percentChange);
-    this.price = price ? new Money(price) : undefined;
+    this.previousPrice = previousPrice ? previousPrice : undefined;
+    this.price = price ? price : undefined;
     this.updated = updated;
   }
 
   public getData(): Record<string, any> {
+    const percent = new PercentChange(this.price, this.previousPrice);
     return {
       id: this.id,
       name: this.name,
       url: this.url,
       created: this.created,
       state: this.state,
-      percentChange: this.percentChange.getPercentage(),
-      changeDirection: this.percentChange.getChangeDirection(),
-      price: this.price?.getAmount(),
+      percentChange: percent.getPercentage(),
+      changeDirection: percent.getChangeDirection(),
+      price: this.price,
       updated: this.updated
     };
   }
