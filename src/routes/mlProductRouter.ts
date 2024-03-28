@@ -1,10 +1,10 @@
 import { Router, Request, Response } from "express";
 import MLProductController from "../controllers/MLProductController";
-import Database from "../infrastructure/persistence/db";
-import MysqlMLProductRepoImpl from "../infrastructure/repositories/MysqlMLProductRepoImpl";
-import MysqlScheduleRepoImpl from "../infrastructure/repositories/MysqlScheduleRepoImpl";
+import Database from "../infrastructure/persistence/pgDb";
 import ScheduleController from "../controllers/ScheduleController";
 import { mlProductUrlValidations } from "../middlewares/mlProductValidations";
+import PostgresMLProductRepoImpl from "../infrastructure/repositories/PostgresMLProductRepoImpl";
+import PostgresScheduleRepoImpl from "../infrastructure/repositories/PostgresScheduleRepoImpl";
 
 const router = Router();
 
@@ -13,7 +13,7 @@ router.get(
   mlProductUrlValidations,
   async (req: Request, res: Response) => {
     const db = await Database.getInstance();
-    const mlProductRepo = new MysqlMLProductRepoImpl(db);
+    const mlProductRepo = new PostgresMLProductRepoImpl(db);
     const mlProductController = new MLProductController(mlProductRepo);
     const filename = "mLProduct.py";
     try {
@@ -34,7 +34,7 @@ router.get(
 
 router.get("/mlProducts", async (req: Request, res: Response) => {
   const db = await Database.getInstance();
-  const mlProductRepo = new MysqlMLProductRepoImpl(db);
+  const mlProductRepo = new PostgresMLProductRepoImpl(db);
   const mlProductController = new MLProductController(mlProductRepo);
   try {
     const products = await mlProductController.getAllData();
@@ -48,7 +48,7 @@ router.get("/mlProducts", async (req: Request, res: Response) => {
 
 router.get("/schedule/:productId", async (req: Request, res: Response) => {
   const db = await Database.getInstance();
-  const scheduleRepo = new MysqlScheduleRepoImpl(db);
+  const scheduleRepo = new PostgresScheduleRepoImpl(db);
   const scheduleController = new ScheduleController(scheduleRepo);
   try {
     const { productId } = req.params;

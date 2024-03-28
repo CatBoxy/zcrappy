@@ -1,6 +1,6 @@
 import Schedule from "../interfaces/schedule/Schedule";
 import { ScheduleRepo, ScheduleRow } from "../interfaces/schedule/ScheduleRepo";
-import Database from "../persistence/db";
+import Database from "../persistence/pgDb";
 
 export default class MysqlScheduleRepoImpl implements ScheduleRepo {
   private db: Database;

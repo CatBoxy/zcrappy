@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 services:
   backend:
     build:
@@ -9,11 +9,11 @@ services:
     volumes:
       - ./:/app
     depends_on:
-      - mysql
+      - postgres
     env_file: .env
 
-  mysql:
-    image: mysql:latest
+  postgres:
+    image: postgres:latest
     env_file: .env
     ports:
-      - "3306:3306"
+      - "5432:5432"

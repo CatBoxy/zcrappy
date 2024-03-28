@@ -1,8 +1,7 @@
-import { RowDataPacket } from "mysql2/promise";
 import MLProduct from "./MLProduct";
 import { ScheduleState } from "../../../enums/ScheduleState";
 
-export interface MLProductRow extends RowDataPacket {
+export interface MLProductRow {
   id: string;
   name: string;
   url: string;
@@ -15,15 +14,15 @@ export interface MLProductRow extends RowDataPacket {
 }
 
 export interface MLProductRepo {
-  initTransaction(): void;
+  initTransaction(): Promise<void>;
 
-  commitTransaction(): void;
+  commitTransaction(): Promise<void>;
 
-  rollbackTransaction(): void;
+  rollbackTransaction(): Promise<void>;
 
-  addMLProduct(mlProduct: MLProduct): void;
+  addMLProduct(mlProduct: MLProduct): Promise<void>;
 
-  addMLProductPrice(mlProduct: MLProduct): void;
+  addMLProductPrice(mlProduct: MLProduct): Promise<void>;
 
   getProductWithUrl(url: string): Promise<MLProductRow>;
 

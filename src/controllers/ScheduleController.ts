@@ -27,9 +27,9 @@ export default class ScheduleControllerImpl implements ScheduleController {
     );
 
     try {
-      this.scheduleRepo.initTransaction();
-      this.scheduleRepo.addSchedule(schedule);
-      this.scheduleRepo.commitTransaction();
+      await this.scheduleRepo.initTransaction();
+      await this.scheduleRepo.addSchedule(schedule);
+      await this.scheduleRepo.commitTransaction();
 
       this.initSchedule(productId, cronExpression);
     } catch (error: any) {

@@ -1,7 +1,6 @@
-import { RowDataPacket } from "mysql2/promise";
 import Schedule from "./Schedule";
 
-export interface ScheduleRow extends RowDataPacket {
+export interface ScheduleRow {
   id: string;
   product_id: string;
   cron_expression: string;
@@ -9,15 +8,15 @@ export interface ScheduleRow extends RowDataPacket {
 }
 
 export interface ScheduleRepo {
-  initTransaction(): void;
+  initTransaction(): Promise<void>;
 
-  commitTransaction(): void;
+  commitTransaction(): Promise<void>;
 
-  rollbackTransaction(): void;
+  rollbackTransaction(): Promise<void>;
 
-  addSchedule(schedule: Schedule): void;
+  addSchedule(schedule: Schedule): Promise<void>;
 
-  updateLastRun(schedule: Schedule): void;
+  updateLastRun(schedule: Schedule): Promise<void>;
 
   getAllSchedules(): Promise<Array<ScheduleRow>>;
 }

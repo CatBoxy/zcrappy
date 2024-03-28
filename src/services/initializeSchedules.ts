@@ -1,15 +1,15 @@
 import cron from "node-cron";
 
-import Database from "../infrastructure/persistence/db";
-import MysqlMLProductRepoImpl from "../infrastructure/repositories/MysqlMLProductRepoImpl";
-import MysqlScheduleRepoImpl from "../infrastructure/repositories/MysqlScheduleRepoImpl";
+import Database from "../infrastructure/persistence/pgDb";
 import MLProductControllerImpl from "../controllers/MLProductController";
+import PostgresMLProductRepoImpl from "../infrastructure/repositories/PostgresMLProductRepoImpl";
+import PostgresScheduleRepoImpl from "../infrastructure/repositories/PostgresScheduleRepoImpl";
 
 export default async function initializeSchedules() {
   try {
     const db = await Database.getInstance();
-    const mlProductRepo = new MysqlMLProductRepoImpl(db);
-    const scheduleRepo = new MysqlScheduleRepoImpl(db);
+    const mlProductRepo = new PostgresMLProductRepoImpl(db);
+    const scheduleRepo = new PostgresScheduleRepoImpl(db);
     const rows = await scheduleRepo.getAllSchedules();
 
     if (rows.length === 0) {

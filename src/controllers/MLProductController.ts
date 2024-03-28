@@ -39,8 +39,10 @@ export default class MLProductControllerImpl implements MLProductController {
     const data = JSON.parse(results);
     const exists = await this.mlProductRepo.productExists(data.url);
 
-    if (!exists) {
-      try {
+    try {
+      await this.mlProductRepo.initTransaction();
+
+      if (!exists) {
         const mlProduct = new MLProduct(
           uuidv4(),
           data.name,
@@ -51,16 +53,11 @@ export default class MLProductControllerImpl implements MLProductController {
           data.price,
           undefined
         );
-        this.mlProductRepo.initTransaction;
         await this.mlProductRepo.addMLProduct(mlProduct);
-        this.mlProductRepo.commitTransaction();
+        await this.mlProductRepo.commitTransaction();
+
         return mlProduct.getData();
-      } catch (error: any) {
-        this.mlProductRepo.rollbackTransaction();
-        throw new Error("MLProduct controller error: " + error.message);
-      }
-    } else {
-      try {
+      } else {
         const product = await this.mlProductRepo.getProductWithUrl(data.url);
         const mlProduct = new MLProduct(
           product.id,
@@ -72,15 +69,15 @@ export default class MLProductControllerImpl implements MLProductController {
           data.price,
           undefined
         );
+        await this.mlProductRepo.addMLProductPrice(mlProduct);
+        await this.mlProductRepo.commitTransaction();
 
-        this.mlProductRepo.initTransaction;
-        this.mlProductRepo.addMLProductPrice(mlProduct);
-        this.mlProductRepo.commitTransaction();
         return mlProduct.getData();
-      } catch (error: any) {
-        this.mlProductRepo.rollbackTransaction();
-        throw new Error("MLProduct controller error: " + error.message);
       }
+    } catch (error: any) {
+      this.mlProductRepo.rollbackTransaction();
+      console.error("Error executing transaction:", error.message);
+      throw new Error("MLProduct controller error: " + error.message);
     }
   }
 
