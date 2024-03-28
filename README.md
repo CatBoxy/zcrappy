@@ -33,9 +33,9 @@ docker-compose up
 
 3. Create a new MySQL database using the configurations provided in the `.example.env` file.
 
+4. Allow CORS for the frontend updating the ORIGIN .env variable.
+
 ## Additional Information
 
 For the frontend application, please refer to the repository at:
 [Frontend App Repository](https://github.com/CatBoxy/scrappy-front)
-
-4. Allow CORS for the frontend updating the ORIGIN .env variable.
