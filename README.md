@@ -8,7 +8,7 @@ Welcome to our project! This is a Dockerized Express API for scraping MercadoLib
 
 - Node.js
 - Express
-- MySQL
+- PostgreSQL
 - Docker
 - TypeScript
 - Python
@@ -31,7 +31,7 @@ docker-compose build
 docker-compose up
 ```
 
-3. Create a new MySQL database using the configurations provided in the `.example.env` file.
+3. Create a new PostgreSQL database using the configurations provided in the `.example.env` file.
 
 4. Allow CORS for the frontend updating the ORIGIN .env variable.
 
