@@ -5,13 +5,13 @@ import { MLProductRepo } from "../infrastructure/interfaces/mlProduct/MLProductR
 import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
 import { ScheduleState } from "../enums/ScheduleState";
 
-interface MLProductController {
+interface ZaraController {
   run(filename: string, query: string): Promise<Record<string, string>>;
   getAll(): Promise<Array<MLProduct>>;
   getAllData(): Promise<Record<string, any>[]>;
 }
 
-export default class MLProductControllerImpl implements MLProductController {
+export default class ZaraProductControllerImpl implements ZaraController {
   private manager = new ScriptManagerImpl();
   private mlProductRepo: MLProductRepo;
 
@@ -35,50 +35,51 @@ export default class MLProductControllerImpl implements MLProductController {
         "MLProduct controller error: Failed to get script results"
       );
     }
+    // console.log(results);
+    return {};
+    // const data = JSON.parse(results);
+    // const exists = await this.mlProductRepo.productExists(data.url);
 
-    const data = JSON.parse(results);
-    const exists = await this.mlProductRepo.productExists(data.url);
+    // try {
+    //   await this.mlProductRepo.initTransaction();
 
-    try {
-      await this.mlProductRepo.initTransaction();
+    //   if (!exists) {
+    //     const mlProduct = new MLProduct(
+    //       uuidv4(),
+    //       data.name,
+    //       data.url,
+    //       data.created,
+    //       ScheduleState.Stopped,
+    //       undefined,
+    //       data.price,
+    //       undefined
+    //     );
+    //     await this.mlProductRepo.addMLProduct(mlProduct);
+    //     await this.mlProductRepo.commitTransaction();
 
-      if (!exists) {
-        const mlProduct = new MLProduct(
-          uuidv4(),
-          data.name,
-          data.url,
-          data.created,
-          ScheduleState.Stopped,
-          undefined,
-          data.price,
-          undefined
-        );
-        await this.mlProductRepo.addMLProduct(mlProduct);
-        await this.mlProductRepo.commitTransaction();
+    //     return mlProduct.getData();
+    //   } else {
+    //     const product = await this.mlProductRepo.getProductWithUrl(data.url);
+    //     const mlProduct = new MLProduct(
+    //       product.id,
+    //       data.name,
+    //       data.url,
+    //       data.created,
+    //       ScheduleState.Stopped,
+    //       undefined,
+    //       data.price,
+    //       undefined
+    //     );
+    //     await this.mlProductRepo.addMLProductPrice(mlProduct);
+    //     await this.mlProductRepo.commitTransaction();
 
-        return mlProduct.getData();
-      } else {
-        const product = await this.mlProductRepo.getProductWithUrl(data.url);
-        const mlProduct = new MLProduct(
-          product.id,
-          data.name,
-          data.url,
-          data.created,
-          ScheduleState.Stopped,
-          undefined,
-          data.price,
-          undefined
-        );
-        await this.mlProductRepo.addMLProductPrice(mlProduct);
-        await this.mlProductRepo.commitTransaction();
-
-        return mlProduct.getData();
-      }
-    } catch (error: any) {
-      this.mlProductRepo.rollbackTransaction();
-      console.error("Error executing transaction:", error.message);
-      throw new Error("MLProduct controller error: " + error.message);
-    }
+    //     return mlProduct.getData();
+    //   }
+    // } catch (error: any) {
+    //   this.mlProductRepo.rollbackTransaction();
+    //   console.error("Error executing transaction:", error.message);
+    //   throw new Error("MLProduct controller error: " + error.message);
+    // }
   }
 
   public async getAll(): Promise<Array<MLProduct>> {

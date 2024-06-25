@@ -1,8 +1,8 @@
 import dotenv from "dotenv";
 import express, { Express, Request, Response } from "express";
 
-import mlProductRouter from "./routes/mlProductRouter";
-import initializeSchedules from "./services/initializeSchedules";
+import zaraRouter from "./routes/zaraRouter";
+// import initializeSchedules from "./services/initializeSchedules";
 import cors from "cors";
 
 dotenv.config();
@@ -17,10 +17,10 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Express + TypeScript Server");
 });
 
-app.use("/api", mlProductRouter);
+app.use("/api", zaraRouter);
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
 });
 
-initializeSchedules();
+// initializeSchedules();

@@ -1,6 +1,6 @@
 import cron from "node-cron";
 
-import MLProductControllerImpl from "../controllers/MLProductController";
+import MLProductControllerImpl from "../controllers/ZaraProductController";
 import MysqlMLProductRepoImpl from "../infrastructure/repositories/MysqlMLProductRepoImpl";
 import Database from "../infrastructure/persistence/db";
 

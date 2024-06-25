@@ -4,3 +4,4 @@ dist/
 package-lock.json
 mvp.txt
 .prettierrc
+metadata.txt

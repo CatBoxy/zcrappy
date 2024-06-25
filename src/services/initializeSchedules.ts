@@ -1,7 +1,7 @@
 import cron from "node-cron";
 
 import Database from "../infrastructure/persistence/pgDb";
-import MLProductControllerImpl from "../controllers/MLProductController";
+import MLProductControllerImpl from "../controllers/ZaraProductController";
 import PostgresMLProductRepoImpl from "../infrastructure/repositories/PostgresMLProductRepoImpl";
 import PostgresScheduleRepoImpl from "../infrastructure/repositories/PostgresScheduleRepoImpl";
 
