@@ -22,16 +22,27 @@ def extract_product_info(url):
         proxyUsername = os.getenv('PROXY_USERNAME')
         proxyPassword = os.getenv('PROXY_PASSWORD')
 
+        # proxies = [
+        #     f"http://{proxyUsername}:{proxyPassword}@185.199.229.156:7492",
+        #     f"http://{proxyUsername}:{proxyPassword}@185.199.228.220:7300",
+        #     f"http://{proxyUsername}:{proxyPassword}@185.199.231.45:8382",
+        #     f"http://{proxyUsername}:{proxyPassword}@188.74.210.207:6286",
+        #     f"http://{proxyUsername}:{proxyPassword}@188.74.183.10:8279",
+        #     f"http://{proxyUsername}:{proxyPassword}@188.74.210.21:6100"
+        #     f"http://{proxyUsername}:{proxyPassword}@45.155.68.129:8133"
+        #     f"http://{proxyUsername}:{proxyPassword}@154.95.36.199:6893"
+        #     f"http://{proxyUsername}:{proxyPassword}@45.94.47.66:8110",
+        # ]
         proxies = [
-            f"http://{proxyUsername}:{proxyPassword}@185.199.229.156:7492",
-            f"http://{proxyUsername}:{proxyPassword}@185.199.228.220:7300",
-            f"http://{proxyUsername}:{proxyPassword}@185.199.231.45:8382",
-            f"http://{proxyUsername}:{proxyPassword}@188.74.210.207:6286",
-            f"http://{proxyUsername}:{proxyPassword}@188.74.183.10:8279",
-            f"http://{proxyUsername}:{proxyPassword}@188.74.210.21:6100"
-            f"http://{proxyUsername}:{proxyPassword}@45.155.68.129:8133"
-            f"http://{proxyUsername}:{proxyPassword}@154.95.36.199:6893"
-            f"http://{proxyUsername}:{proxyPassword}@45.94.47.66:8110",
+            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10001",
+            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10002",
+            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10003",
+            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10004",
+            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10005",
+            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10006",
+            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10007",
+            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10008",
+            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10009",
         ]
 
         proxy_pool = cycle(proxies)
@@ -80,7 +91,6 @@ def extract_product_info(url):
             rr = requests.post(sec, cookies=r.cookies, json=payload, headers=headers)
             rrr = requests.get(url, cookies=rr.cookies, headers=headers)
             finalHtml = rrr.content
-            print(finalHtml)
             soup = BeautifulSoup(finalHtml, 'html.parser')
             product_script = soup.find('script', {'type': 'application/ld+json'})
             links = {}
