@@ -34,15 +34,15 @@ def extract_product_info(url):
         #     f"http://{proxyUsername}:{proxyPassword}@45.94.47.66:8110",
         # ]
         proxies = [
-            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10001",
-            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10002",
-            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10003",
-            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10004",
-            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10005",
-            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10006",
-            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10007",
-            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10008",
-            f"http://{proxyUsername}:{proxyPassword}@gate.smartproxy.com:10009",
+            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10001",
+            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10002",
+            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10003",
+            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10004",
+            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10005",
+            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10006",
+            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10007",
+            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10008",
+            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10009",
         ]
 
         proxy_pool = cycle(proxies)
@@ -71,7 +71,7 @@ def extract_product_info(url):
             proxy = next(proxy_pool)
             # print("Using proxy:", proxy)
             session = requests.Session()
-            retries = Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+            retries = Retry(total=5, backoff_factor=2, status_forcelist=[500, 502, 503, 504])
             adapter = HTTPAdapter(max_retries=retries)
             session.mount('http://', adapter)
             session.mount('https://', adapter)
