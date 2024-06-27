@@ -89,8 +89,8 @@ def extract_product_info(url):
                 'bm-verify': re.search(rb'"bm-verify"\s*:\s*"([^"]+)', html)[1].decode(),
                 'pow': int(i) + int(j)
             }
-            rr = requests.post(sec, cookies=r.cookies, json=payload, headers=headers)
-            rrr = requests.get(url, cookies=rr.cookies, headers=headers)
+            rr = session.post(sec, cookies=r.cookies, json=payload, headers=headers)
+            rrr = session.get(url, cookies=rr.cookies, headers=headers)
             finalHtml = rrr.content
             print(finalHtml)
             soup = BeautifulSoup(finalHtml, 'html.parser')
