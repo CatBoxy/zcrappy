@@ -80,6 +80,7 @@ def extract_product_info(url):
             rr = requests.post(sec, cookies=r.cookies, json=payload, headers=headers)
             rrr = requests.get(url, cookies=rr.cookies, headers=headers)
             finalHtml = rrr.content
+            print(finalHtml)
             soup = BeautifulSoup(finalHtml, 'html.parser')
             product_script = soup.find('script', {'type': 'application/ld+json'})
             links = {}
@@ -96,7 +97,7 @@ def extract_product_info(url):
                             "url": offer_url
                         }
             else:
-                print("No JSON-LD script tag found")
+                # print("No JSON-LD script tag found")
                 raise ValueError("No JSON-LD script tag found")
             script_tags = soup.findAll('script', {'data-compress': 'true', 'type': 'text/javascript'})
             product = {
@@ -142,12 +143,12 @@ def extract_product_info(url):
                                         color_dict["sizes"].append(size_dict)
                                     product["colors"].append(color_dict)
                         except json.JSONDecodeError as e:
-                            print("Failed to parse JSON:", e)
+                            # print("Failed to parse JSON:", e)
                             raise ValueError("Failed to parse JSON:", e)
                     else:
                         continue
             else:
-                print("No matching script tag found")
+                # print("No matching script tag found")
                 raise ValueError("No matching script tag found")
             for color in product["colors"]:
                 color_name = color["name"]
@@ -157,7 +158,7 @@ def extract_product_info(url):
             return product
 
     except (requests.RequestException, ValueError, json.JSONDecodeError, KeyError) as e:
-        print(f"Error occurred: {e}")
+        # print(f"Error occurred: {e}")
         return None
 
 
