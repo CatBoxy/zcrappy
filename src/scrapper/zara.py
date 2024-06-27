@@ -80,7 +80,7 @@ def extract_product_info(url):
             r = session.get(url, proxies={"http": proxy, "https": proxy}, headers=headers, timeout=20)
             r.raise_for_status()
             html = r.content
-            print(html)
+            # print(html)
             # extract `i`, `j` and `bm-verify`
             i = re.search(rb'var i = (\d+)', html)[1]
             j = re.search(rb'var j = i [+] Number[(]"(\d+)" [+] "(\d+)"[)]', html)
