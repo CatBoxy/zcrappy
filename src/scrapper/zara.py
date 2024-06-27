@@ -92,7 +92,6 @@ def extract_product_info(url):
             rr = session.post(sec, proxies={"http": proxy, "https": proxy}, cookies=r.cookies, json=payload, headers=headers)
             rrr = session.get(url, proxies={"http": proxy, "https": proxy}, cookies=rr.cookies, headers=headers)
             finalHtml = rrr.content
-            print(finalHtml)
             soup = BeautifulSoup(finalHtml, 'html.parser')
             product_script = soup.find('script', {'type': 'application/ld+json'})
             links = {}
