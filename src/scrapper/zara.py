@@ -92,6 +92,7 @@ def extract_product_info(url):
             rr = requests.post(sec, cookies=r.cookies, json=payload, headers=headers)
             rrr = requests.get(url, cookies=rr.cookies, headers=headers)
             finalHtml = rrr.content
+            print(finalHtml)
             soup = BeautifulSoup(finalHtml, 'html.parser')
             product_script = soup.find('script', {'type': 'application/ld+json'})
             links = {}

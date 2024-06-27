@@ -2,7 +2,6 @@ import { Router, Request, Response } from "express";
 import ZaraProductController from "../controllers/ZaraProductController";
 import Database from "../infrastructure/persistence/pgDb";
 import ScheduleController from "../controllers/ScheduleController";
-// import { mlProductUrlValidations } from "../middlewares/mlProductValidations";
 import PostgresMLProductRepoImpl from "../infrastructure/repositories/PostgresMLProductRepoImpl";
 import PostgresScheduleRepoImpl from "../infrastructure/repositories/PostgresScheduleRepoImpl";
 import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
