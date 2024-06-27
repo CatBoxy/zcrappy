@@ -34,15 +34,15 @@ def extract_product_info(url):
         #     f"http://{proxyUsername}:{proxyPassword}@45.94.47.66:8110",
         # ]
         proxies = [
-            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10001",
-            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10002",
-            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10003",
-            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10004",
-            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10005",
-            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10006",
-            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10007",
-            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10008",
-            f"http://{proxyUsername}:{proxyPassword}@ar.smartproxy.com:10009",
+            f"http://gate.smartproxy.com:10001",
+            f"http://gate.smartproxy.com:10002",
+            f"http://gate.smartproxy.com:10003",
+            f"http://gate.smartproxy.com:10004",
+            f"http://gate.smartproxy.com:10005",
+            f"http://gate.smartproxy.com:10006",
+            f"http://gate.smartproxy.com:10007",
+            f"http://gate.smartproxy.com:10008",
+            f"http://gate.smartproxy.com:10009",
         ]
 
         proxy_pool = cycle(proxies)
