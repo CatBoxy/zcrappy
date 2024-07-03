@@ -1,22 +1,49 @@
 import { v4 as uuidv4 } from "uuid";
 
-import MLProduct from "../infrastructure/interfaces/mlProduct/MLProduct";
-import { MLProductRepo } from "../infrastructure/interfaces/mlProduct/MLProductRepo";
+import ZaraProduct, {
+  Color,
+  Size
+} from "../infrastructure/interfaces/zaraProduct/ZaraProduct";
+import { ZaraProductRepo } from "../infrastructure/interfaces/zaraProduct/ZaraProductRepo";
 import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
 import { ScheduleState } from "../enums/ScheduleState";
+import { ScheduleRepo } from "../infrastructure/interfaces/schedule/ScheduleRepo";
+import Schedule from "../infrastructure/interfaces/schedule/Schedule";
+
+type SizeData = {
+  name: string;
+  availability: string;
+  created: Date;
+  oldPrice: number;
+  price: number;
+  discountPercentage: string;
+};
+
+type ColorData = {
+  name: string;
+  hexCode: string;
+  created: Date;
+  sizes: SizeData[];
+  image: string;
+  url: string;
+};
 
 interface ZaraController {
   run(filename: string, query: string): Promise<Record<string, string>>;
-  getAll(): Promise<Array<MLProduct>>;
-  getAllData(): Promise<Record<string, any>[]>;
+  handleAddOrUpdateZaraProduct(
+    userUuid: string,
+    productData: any
+  ): Promise<ZaraProduct>;
 }
 
 export default class ZaraProductControllerImpl implements ZaraController {
   private manager = new ScriptManagerImpl();
-  private mlProductRepo: MLProductRepo;
+  private zaraProductRepo: ZaraProductRepo;
+  private scheduleRepo: ScheduleRepo;
 
-  constructor(mlProductRepo: MLProductRepo) {
-    this.mlProductRepo = mlProductRepo;
+  constructor(zaraProductRepo: ZaraProductRepo, scheduleRepo: ScheduleRepo) {
+    this.zaraProductRepo = zaraProductRepo;
+    this.scheduleRepo = scheduleRepo;
   }
 
   public async run(
@@ -32,90 +59,131 @@ export default class ZaraProductControllerImpl implements ZaraController {
     if (!results) {
       console.log("Failed to get script results");
       throw new Error(
-        "MLProduct controller error: Failed to get script results"
+        "ZaraProduct controller error: Failed to get script results"
       );
     }
-    // console.log(results);
-    return {};
-    // const data = JSON.parse(results);
-    // const exists = await this.mlProductRepo.productExists(data.url);
+    const data = JSON.parse(results);
+    console.log(data);
 
-    // try {
-    //   await this.mlProductRepo.initTransaction();
-
-    //   if (!exists) {
-    //     const mlProduct = new MLProduct(
-    //       uuidv4(),
-    //       data.name,
-    //       data.url,
-    //       data.created,
-    //       ScheduleState.Stopped,
-    //       undefined,
-    //       data.price,
-    //       undefined
-    //     );
-    //     await this.mlProductRepo.addMLProduct(mlProduct);
-    //     await this.mlProductRepo.commitTransaction();
-
-    //     return mlProduct.getData();
-    //   } else {
-    //     const product = await this.mlProductRepo.getProductWithUrl(data.url);
-    //     const mlProduct = new MLProduct(
-    //       product.id,
-    //       data.name,
-    //       data.url,
-    //       data.created,
-    //       ScheduleState.Stopped,
-    //       undefined,
-    //       data.price,
-    //       undefined
-    //     );
-    //     await this.mlProductRepo.addMLProductPrice(mlProduct);
-    //     await this.mlProductRepo.commitTransaction();
-
-    //     return mlProduct.getData();
-    //   }
-    // } catch (error: any) {
-    //   this.mlProductRepo.rollbackTransaction();
-    //   console.error("Error executing transaction:", error.message);
-    //   throw new Error("MLProduct controller error: " + error.message);
-    // }
-  }
-
-  public async getAll(): Promise<Array<MLProduct>> {
     try {
-      const productRows = await this.mlProductRepo.getAllProducts();
-      const products = productRows.map((row) => {
-        const state = row.state ? row.state : ScheduleState.Stopped;
-        return new MLProduct(
-          row.id,
-          row.name,
-          row.url,
-          row.created,
-          state,
-          row.previous_price,
-          row.price,
-          row.updated
-        );
-      });
-      return products;
+      const product = await this.handleAddOrUpdateZaraProduct(
+        "d8315770-833a-480e-ab2f-45100c5a2641",
+        data
+      );
+      return product.getData();
     } catch (error: any) {
-      console.error("Error getting MLProducts:", error.message);
-      throw new Error("MLProduct controller error: " + error.message);
+      console.error("Error executing transaction:", error.message);
+      throw new Error("ZaraProduct controller error: " + error.message);
     }
   }
 
-  public async getAllData(): Promise<Record<string, any>[]> {
-    try {
-      const products = await this.getAll();
-      const productData = products.map((product) => {
-        return product.getData();
-      });
+  public async handleAddOrUpdateZaraProduct(
+    userUuid: string,
+    productData: any
+  ): Promise<ZaraProduct> {
+    const existingProduct = await this.zaraProductRepo.getProductDetails(
+      userUuid,
+      productData.name
+    );
 
-      return productData;
-    } catch (error: any) {
-      console.error("Error getting MLProducts data:", error.message);
-      throw new Error("MLProduct controller error: " + error.message);
+    if (existingProduct) {
+      for (const colorData of productData.colors) {
+        let existingColor = existingProduct.colors.find(
+          (color) => color.name === colorData.name
+        );
+
+        if (!existingColor) {
+          existingColor = new Color(
+            uuidv4(),
+            colorData.name,
+            colorData.hexCode,
+            colorData.created,
+            [],
+            colorData.image,
+            colorData.url,
+            existingProduct.uuid
+          );
+          existingProduct.colors.push(existingColor);
+        }
+
+        for (const sizeData of colorData.sizes) {
+          let existingSize = existingColor.sizes.find(
+            (size) => size.name === sizeData.name
+          );
+
+          if (!existingSize) {
+            existingSize = new Size(
+              uuidv4(),
+              sizeData.name,
+              sizeData.availability,
+              colorData.created,
+              sizeData.oldPrice,
+              sizeData.price,
+              sizeData.discountPercentage,
+              existingColor.uuid,
+              existingProduct.uuid
+            );
+            existingColor.sizes.push(existingSize);
+          } else {
+            existingSize.availability = sizeData.availability;
+            existingSize.oldPrice = sizeData.oldPrice;
+            existingSize.price = sizeData.price;
+            existingSize.discountPercentage = sizeData.discountPercentage;
+          }
+        }
+      }
+
+      await this.zaraProductRepo.addOrUpdateZaraProduct(existingProduct);
+      return existingProduct;
+    } else {
+      const productUuid = uuidv4();
+      const newProduct = new ZaraProduct(
+        productUuid,
+        productData.name,
+        productData.colors[0].url,
+        productData.created,
+        userUuid,
+        productData.colors.map((colorData: ColorData) => {
+          const colorUuid = uuidv4();
+          return new Color(
+            colorUuid,
+            colorData.name,
+            colorData.hexCode,
+            colorData.created,
+            colorData.sizes.map((sizeData: SizeData) => {
+              const sizeUuid = uuidv4();
+              return new Size(
+                sizeUuid,
+                sizeData.name,
+                sizeData.availability,
+                sizeData.created,
+                sizeData.oldPrice,
+                sizeData.price,
+                sizeData.discountPercentage,
+                colorUuid,
+                productUuid
+              );
+            }),
+            colorData.image,
+            colorData.url,
+            productUuid
+          );
+        })
+      );
+
+      await this.zaraProductRepo.addOrUpdateZaraProduct(newProduct);
+      const cronExpression = "0 0 * * *";
+      const schedule = new Schedule(
+        uuidv4(),
+        productUuid,
+        cronExpression,
+        undefined,
+        new Date(),
+        undefined,
+        ScheduleState.Playing
+      );
+      this.scheduleRepo.addSchedule(schedule);
+      return newProduct;
     }
   }
 }

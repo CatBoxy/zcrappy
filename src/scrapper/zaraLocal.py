@@ -16,20 +16,6 @@ def extract_product_info(url):
                 'body': json.dumps({'error': 'url parameter is required in request body'})
             }
 
-        proxies = [
-            f"http://gate.smartproxy.com:10001",
-            f"http://gate.smartproxy.com:10002",
-            f"http://gate.smartproxy.com:10003",
-            f"http://gate.smartproxy.com:10004",
-            f"http://gate.smartproxy.com:10005",
-            f"http://gate.smartproxy.com:10006",
-            f"http://gate.smartproxy.com:10007",
-            f"http://gate.smartproxy.com:10008",
-            f"http://gate.smartproxy.com:10009",
-        ]
-
-        proxy_pool = cycle(proxies)
-
         site = 'https://www.zara.com'
         sec  = site + '/_sec/verify?provider=interstitial'
 
@@ -53,7 +39,6 @@ def extract_product_info(url):
         current_utc_datetime = datetime.utcnow().isoformat()
 
         for _ in range(9):
-            proxy = next(proxy_pool)
             session = requests.Session()
             retries = Retry(total=5, backoff_factor=2, status_forcelist=[500, 502, 503, 504])
             adapter = HTTPAdapter(max_retries=retries)
@@ -61,7 +46,7 @@ def extract_product_info(url):
             session.mount('https://', adapter)
 
 
-            r = session.get(url, proxies={"http": proxy, "https": proxy}, headers=headers, timeout=20)
+            r = session.get(url, headers=headers, timeout=20)
             r.raise_for_status()
             html = r.content
             # extract `i`, `j` and `bm-verify`
@@ -72,8 +57,8 @@ def extract_product_info(url):
                 'bm-verify': re.search(rb'"bm-verify"\s*:\s*"([^"]+)', html)[1].decode(),
                 'pow': int(i) + int(j)
             }
-            rr = session.post(sec, proxies={"http": proxy, "https": proxy}, cookies=r.cookies, json=payload, headers=headers)
-            rrr = session.get(url, proxies={"http": proxy, "https": proxy}, cookies=rr.cookies, headers=headers)
+            rr = session.post(sec, cookies=r.cookies, json=payload, headers=headers)
+            rrr = session.get(url, cookies=rr.cookies, headers=headers)
             finalHtml = rrr.content
             soup = BeautifulSoup(finalHtml, 'html.parser')
             product_script = soup.find('script', {'type': 'application/ld+json'})
@@ -118,7 +103,7 @@ def extract_product_info(url):
                                     }
                                     for size in color["sizes"]:
                                         size_dict = {
-                                            "created": current_utc_datetime,
+                                            "created": current_utc_datetime
                                         }
                                         if "name" in size and size["name"] is not None:
                                             size_dict["name"] = size["name"]

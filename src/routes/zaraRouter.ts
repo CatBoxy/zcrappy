@@ -1,18 +1,20 @@
 import { Router, Request, Response } from "express";
 import ZaraProductController from "../controllers/ZaraProductController";
-import Database from "../infrastructure/persistence/pgDb";
 import ScheduleController from "../controllers/ScheduleController";
-import PostgresMLProductRepoImpl from "../infrastructure/repositories/PostgresMLProductRepoImpl";
-import PostgresScheduleRepoImpl from "../infrastructure/repositories/PostgresScheduleRepoImpl";
 import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
+import SupabaseZaraProductRepoImpl from "../infrastructure/repositories/SupabaseProductRepoImpl";
+import SupabaseScheduleRepoImpl from "../infrastructure/repositories/SupabaseScheduleRepoImpl";
 
 const router = Router();
 
 router.get("/zaraProduct", async (req: Request, res: Response) => {
-  const db = await Database.getInstance();
-  const zaraProductRepo = new PostgresMLProductRepoImpl(db);
-  const zaraProductController = new ZaraProductController(zaraProductRepo);
-  const filename = "zara.py";
+  const zaraProductRepo = new SupabaseZaraProductRepoImpl();
+  const scheduleRepo = new SupabaseScheduleRepoImpl();
+  const zaraProductController = new ZaraProductController(
+    zaraProductRepo,
+    scheduleRepo
+  );
+  const filename = "zaraLocal.py";
   try {
     const { url } = req.query;
     let product;
@@ -21,46 +23,47 @@ router.get("/zaraProduct", async (req: Request, res: Response) => {
     } else {
       product = await zaraProductController.run(filename);
     }
-    res.json({ message: "Product added successfully", name: product.name });
+    res.json({ message: "Product added successfully", product: product.name });
   } catch (error) {
     console.error("Error executing script:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-router.get("/zaraProducts", async (req: Request, res: Response) => {
-  const db = await Database.getInstance();
-  const zaraProductRepo = new PostgresMLProductRepoImpl(db);
-  const zaraProductController = new ZaraProductController(zaraProductRepo);
-  try {
-    const products = await zaraProductController.getAllData();
+// router.get("/zaraProducts", async (req: Request, res: Response) => {
+//   const db = await Database.getInstance();
+//   const zaraProductRepo = new PostgresMLProductRepoImpl(db);
+//   const zaraProductController = new ZaraProductController(zaraProductRepo);
+//   try {
+//     const products = await zaraProductController.getAllData();
 
-    res.json(products);
-  } catch (error) {
-    console.error("Error getting all products:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+//     res.json(products);
+//   } catch (error) {
+//     console.error("Error getting all products:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
-router.get("/schedule/:productId", async (req: Request, res: Response) => {
-  const db = await Database.getInstance();
-  const scheduleRepo = new PostgresScheduleRepoImpl(db);
-  const scheduleController = new ScheduleController(scheduleRepo);
-  try {
-    const { productId } = req.params;
+// router.get("/schedule/:productId", async (req: Request, res: Response) => {
+//   const db = await Database.getInstance();
+//   const scheduleRepo = new PostgresScheduleRepoImpl(db);
+//   const scheduleController = new ScheduleController(scheduleRepo);
+//   try {
+//     const { productId } = req.params;
 
-    await scheduleController.schedule(productId);
-    res.json({
-      message: `Scheduled daily updates for product ID ${productId}`
-    });
-  } catch (error) {
-    console.error("Error saving schedule:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+//     await scheduleController.schedule(productId);
+//     res.json({
+//       message: `Scheduled daily updates for product ID ${productId}`
+//     });
+//   } catch (error) {
+//     console.error("Error saving schedule:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
+// FOR TESTING
 router.get("/zaraProductTest", async (req: Request, res: Response) => {
-  const filename = "zara.py";
+  const filename = "zaraLocal.py";
   const { url } = req.query;
   const manager = new ScriptManagerImpl();
   let results;

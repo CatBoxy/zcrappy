@@ -8,15 +8,9 @@ export interface ScheduleRow {
 }
 
 export interface ScheduleRepo {
-  initTransaction(): Promise<void>;
-
-  commitTransaction(): Promise<void>;
-
-  rollbackTransaction(): Promise<void>;
-
   addSchedule(schedule: Schedule): Promise<void>;
 
   updateLastRun(schedule: Schedule): Promise<void>;
 
-  getAllSchedules(): Promise<Array<ScheduleRow>>;
+  // getAllSchedules(): Promise<Array<ScheduleRow>>;
 }

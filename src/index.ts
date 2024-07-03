@@ -4,6 +4,7 @@ import express, { Express, Request, Response } from "express";
 import zaraRouter from "./routes/zaraRouter";
 // import initializeSchedules from "./services/initializeSchedules";
 import cors from "cors";
+import { setupRealtime } from "./services/initializeSchedules";
 
 dotenv.config();
 
@@ -19,8 +20,9 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/api", zaraRouter);
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
+  await setupRealtime();
 });
 
 // initializeSchedules();

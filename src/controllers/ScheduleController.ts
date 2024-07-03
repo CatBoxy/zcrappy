@@ -2,6 +2,7 @@ import { ScheduleRepo } from "../infrastructure/interfaces/schedule/ScheduleRepo
 import Schedule from "../infrastructure/interfaces/schedule/Schedule";
 import initializeSchedule from "../services/initializeSchedule";
 import { ScheduleState } from "../enums/ScheduleState";
+import { v4 as uuidv4 } from "uuid";
 
 interface ScheduleController {
   schedule(filename: string, query: string): Promise<void>;
@@ -18,6 +19,7 @@ export default class ScheduleControllerImpl implements ScheduleController {
   public async schedule(productId: string): Promise<void> {
     const cronExpression = "0 0 * * *";
     const schedule = new Schedule(
+      uuidv4(),
       productId,
       cronExpression,
       undefined,
@@ -27,14 +29,11 @@ export default class ScheduleControllerImpl implements ScheduleController {
     );
 
     try {
-      await this.scheduleRepo.initTransaction();
       await this.scheduleRepo.addSchedule(schedule);
-      await this.scheduleRepo.commitTransaction();
 
       this.initSchedule(productId, cronExpression);
     } catch (error: any) {
       console.error("Error saving schedule:", error.message);
-      this.scheduleRepo.rollbackTransaction();
       throw new Error("Schedule controller error: " + error.message);
     }
   }
