@@ -86,6 +86,10 @@ export default class ZaraProductControllerImpl implements ZaraController {
       productData.name
     );
 
+    const arrivingProductColors: Set<string> = new Set(
+      productData.colors.map((color: ColorData) => color.name)
+    );
+
     if (existingProduct) {
       for (const colorData of productData.colors) {
         let existingColor = existingProduct.colors.find(
@@ -129,6 +133,13 @@ export default class ZaraProductControllerImpl implements ZaraController {
             existingSize.oldPrice = sizeData.oldPrice;
             existingSize.price = sizeData.price;
             existingSize.discountPercentage = sizeData.discountPercentage;
+          }
+        }
+      }
+      for (const existingColor of existingProduct.colors) {
+        if (!arrivingProductColors.has(existingColor.name)) {
+          for (const existingSize of existingColor.sizes) {
+            existingSize.availability = "out_of_stock";
           }
         }
       }
