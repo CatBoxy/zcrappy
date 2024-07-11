@@ -48,6 +48,7 @@ export default class ZaraProductControllerImpl implements ZaraController {
 
   public async run(
     fileName: string,
+    userId: string,
     query?: string
   ): Promise<Record<string, any>> {
     let results;
@@ -63,13 +64,9 @@ export default class ZaraProductControllerImpl implements ZaraController {
       );
     }
     const data = JSON.parse(results);
-    console.log(data);
 
     try {
-      const product = await this.handleAddOrUpdateZaraProduct(
-        "d8315770-833a-480e-ab2f-45100c5a2641",
-        data
-      );
+      const product = await this.handleAddOrUpdateZaraProduct(userId, data);
       return product.getData();
     } catch (error: any) {
       console.error("Error executing transaction:", error.message);

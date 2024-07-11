@@ -16,12 +16,13 @@ router.get("/zaraProduct", async (req: Request, res: Response) => {
   );
   const filename = "zaraLocal.py";
   try {
-    const { url } = req.query;
+    const { url, user } = req.query as { url: string; user: string };
+    console.log(user);
     let product;
-    if (typeof url === "string") {
-      product = await zaraProductController.run(filename, url);
+    if (url && user) {
+      product = await zaraProductController.run(filename, user, url);
     } else {
-      product = await zaraProductController.run(filename);
+      product = await zaraProductController.run(filename, user);
     }
     res.json({ message: "Product added successfully", product: product.name });
   } catch (error) {
