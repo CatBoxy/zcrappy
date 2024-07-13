@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
+import { createClient } from "@supabase/supabase-js";
 import ZaraProductController from "../controllers/ZaraProductController";
-import ScheduleController from "../controllers/ScheduleController";
+// import ScheduleController from "../controllers/ScheduleController";
 import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
 import SupabaseZaraProductRepoImpl from "../infrastructure/repositories/SupabaseProductRepoImpl";
 import SupabaseScheduleRepoImpl from "../infrastructure/repositories/SupabaseScheduleRepoImpl";
@@ -29,6 +30,45 @@ router.get("/zaraProduct", async (req: Request, res: Response) => {
     console.error("Error executing script:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
+});
+
+router.post("/link-telegram", async (req: Request, res: Response) => {
+  console.log(req.body);
+  const { token, userId } = req.body;
+  const serviceKey: string = process.env.SERVICE_KEY!;
+  const supabaseUrl: string = process.env.SUPABASE_URL!;
+  const telegramTokenTable: string = "Telegram_token";
+  const userTable: string = "User";
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  const { data: tokenData, error: tokenError } = await supabase
+    .from(telegramTokenTable)
+    .select("telegram_user_id")
+    .eq("token", token)
+    .single();
+
+  if (tokenError || !tokenData) {
+    return res.status(400).send({ message: "Token vencida o no existente." });
+  }
+
+  const telegramId = tokenData.telegram_user_id;
+
+  const { data, error } = await supabase
+    .from(userTable)
+    .update({ telegram_id: telegramId })
+    .eq("uuid", userId);
+
+  if (error) {
+    return res
+      .status(500)
+      .send({ message: "Error al enlazar cuenta de Telegram." });
+  }
+
+  await supabase.from(telegramTokenTable).delete().eq("token", token);
+
+  res
+    .status(200)
+    .send({ message: "Cuenta de Telegram enlazada satisfactoriamente." });
 });
 
 // router.get("/zaraProducts", async (req: Request, res: Response) => {
