@@ -6,6 +6,8 @@ import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
 import SupabaseZaraProductRepoImpl from "../infrastructure/repositories/SupabaseProductRepoImpl";
 import SupabaseScheduleRepoImpl from "../infrastructure/repositories/SupabaseScheduleRepoImpl";
 
+const scrapingScript = process.env.SCRAPING_SCRIPT!;
+
 const router = Router();
 
 router.get("/zaraProduct", async (req: Request, res: Response) => {
@@ -15,7 +17,7 @@ router.get("/zaraProduct", async (req: Request, res: Response) => {
     zaraProductRepo,
     scheduleRepo
   );
-  const filename = "zaraLocal.py";
+  const filename = scrapingScript;
   try {
     const { url, user } = req.query as { url: string; user: string };
     console.log(user);
@@ -104,7 +106,7 @@ router.post("/link-telegram", async (req: Request, res: Response) => {
 
 // FOR TESTING
 router.get("/zaraProductTest", async (req: Request, res: Response) => {
-  const filename = "zaraLocal.py";
+  const filename = scrapingScript;
   const { url } = req.query;
   const manager = new ScriptManagerImpl();
   let results;

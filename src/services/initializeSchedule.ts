@@ -4,6 +4,8 @@ import ZaraProductControllerImpl from "../controllers/ZaraProductController";
 import SupabaseZaraProductRepoImpl from "../infrastructure/repositories/SupabaseProductRepoImpl";
 import SupabaseScheduleRepoImpl from "../infrastructure/repositories/SupabaseScheduleRepoImpl";
 
+const scrapingScript = process.env.SCRAPING_SCRIPT!;
+
 export default async function initializeSchedule(
   productId: string,
   cronExpression: string
@@ -24,7 +26,7 @@ export default async function initializeSchedule(
         `Initialization for product ID ${productId} schedule started.`
       );
       cron.schedule(cronExpression, async () => {
-        await zaraProductController.run("zaraLocal.py", product.url);
+        await zaraProductController.run(scrapingScript, product.url);
         console.log(
           `Scheduled execution for product ID ${productId} completed.`
         );

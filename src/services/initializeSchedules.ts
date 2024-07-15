@@ -15,6 +15,7 @@ dotenv.config();
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_KEY = process.env.SERVICE_KEY!;
 const SUPABASE_ANON_KEY = process.env.ANON_KEY!;
+const scrapingScript = process.env.SCRAPING_SCRIPT!;
 const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -118,7 +119,7 @@ const createOrUpdateCronJob = (schedule: ScheduledTaskEntry): void => {
           if (productDetails) {
             const productData = productDetails.getData();
             await zaraProductController.run(
-              "zaraLocal.py",
+              scrapingScript,
               user_id,
               productData.url
             );
