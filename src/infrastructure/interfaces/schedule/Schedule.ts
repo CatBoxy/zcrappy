@@ -3,6 +3,7 @@ import { ScheduleState } from "../../../enums/ScheduleState";
 export default class Schedule {
   public uuid;
   public productId;
+  public userId;
   public cronExpression;
   public lastRun?;
   public created;
@@ -12,6 +13,7 @@ export default class Schedule {
   constructor(
     uuid: string,
     productId: string,
+    userId: string,
     cronExpression: string,
     lastRun: Date | undefined,
     created: Date,
@@ -20,6 +22,7 @@ export default class Schedule {
   ) {
     this.uuid = uuid;
     this.productId = productId;
+    this.userId = userId;
     this.cronExpression = cronExpression;
     this.lastRun = lastRun || null;
     this.created = created;
@@ -31,6 +34,7 @@ export default class Schedule {
     return {
       uuid: this.uuid,
       productId: this.productId,
+      userId: this.userId,
       cronExpression: this.cronExpression,
       lastRun: this.lastRun,
       created: this.created,

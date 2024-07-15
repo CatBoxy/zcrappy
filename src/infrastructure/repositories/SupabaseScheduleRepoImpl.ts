@@ -21,6 +21,7 @@ export default class SupabaseScheduleRepoImpl implements ScheduleRepo {
             uuid: scheduleData.uuid,
             created_at: scheduleData.created,
             product_id: scheduleData.productId,
+            user_id: scheduleData.userId,
             cron_expression: scheduleData.cronExpression,
             state: scheduleData.state
           }

@@ -23,6 +23,7 @@ interface ScheduledTaskEntry {
   created_at: string;
   deleted_at: string | null;
   product_id: string;
+  user_id: string;
   cron_expression: string;
   last_run: string | null;
   state: keyof typeof ScheduleState;
@@ -102,7 +103,7 @@ const handleScheduleDelete = (payload: any): void => {
 
 const createOrUpdateCronJob = (schedule: ScheduledTaskEntry): void => {
   try {
-    const { uuid, cron_expression, state, product_id } = schedule;
+    const { uuid, cron_expression, state, product_id, user_id } = schedule;
 
     if (state === "Playing") {
       if (cronJobs[uuid]) {
@@ -116,7 +117,11 @@ const createOrUpdateCronJob = (schedule: ScheduledTaskEntry): void => {
           );
           if (productDetails) {
             const productData = productDetails.getData();
-            await zaraProductController.run("zaraLocal.py", productData.url);
+            await zaraProductController.run(
+              "zaraLocal.py",
+              user_id,
+              productData.url
+            );
           }
         } catch (error) {
           console.error(`Error executing job for schedule ID: ${uuid}`, error);

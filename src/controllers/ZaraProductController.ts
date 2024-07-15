@@ -9,6 +9,8 @@ import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
 import { ScheduleState } from "../enums/ScheduleState";
 import { ScheduleRepo } from "../infrastructure/interfaces/schedule/ScheduleRepo";
 import Schedule from "../infrastructure/interfaces/schedule/Schedule";
+import { sendTelegramAlert } from "../services/telegramBotService";
+import { StockState } from "../enums/StockState";
 
 type SizeData = {
   name: string;
@@ -51,6 +53,7 @@ export default class ZaraProductControllerImpl implements ZaraController {
     userId: string,
     query?: string
   ): Promise<Record<string, any>> {
+    console.log("ran schedule");
     let results;
     if (query) {
       results = await this.manager.runScript(fileName, [query]);
@@ -88,6 +91,9 @@ export default class ZaraProductControllerImpl implements ZaraController {
     );
 
     if (existingProduct) {
+      let availabilityChanges: string[] = [];
+      let newSizes: string[] = [];
+
       for (const colorData of productData.colors) {
         let existingColor = existingProduct.colors.find(
           (color) => color.name === colorData.name
@@ -125,7 +131,26 @@ export default class ZaraProductControllerImpl implements ZaraController {
               existingProduct.uuid
             );
             existingColor.sizes.push(existingSize);
+            newSizes.push(
+              `Nuevo talle añadido: ${sizeData.name} para el producto: ${
+                productData.name
+              }, color: ${colorData.name}, disponibilidad: ${this.availability(
+                sizeData.availability
+              )}`
+            );
           } else {
+            const isRestock =
+              existingSize.availability === StockState.Out_of_stock &&
+              sizeData.availability !== StockState.Out_of_stock;
+            if (isRestock) {
+              availabilityChanges.push(
+                `Disponibilidad actualizada para producto: ${
+                  productData.name
+                }, para el talle: ${sizeData.name}, de color: ${
+                  colorData.name
+                }, disponibilidad: ${this.availability(sizeData.availability)}`
+              );
+            }
             existingSize.availability = sizeData.availability;
             existingSize.oldPrice = sizeData.oldPrice;
             existingSize.price = sizeData.price;
@@ -136,12 +161,21 @@ export default class ZaraProductControllerImpl implements ZaraController {
       for (const existingColor of existingProduct.colors) {
         if (!arrivingProductColors.has(existingColor.name)) {
           for (const existingSize of existingColor.sizes) {
-            existingSize.availability = "out_of_stock";
+            existingSize.availability = StockState.Out_of_stock;
           }
         }
       }
 
       await this.zaraProductRepo.addOrUpdateZaraProduct(existingProduct);
+
+      if (newSizes.length > 0) {
+        await sendTelegramAlert(userUuid, newSizes.join("\n"));
+      }
+
+      if (availabilityChanges.length > 0) {
+        await sendTelegramAlert(userUuid, availabilityChanges.join("\n"));
+      }
+
       return existingProduct;
     } else {
       const productUuid = uuidv4();
@@ -180,18 +214,36 @@ export default class ZaraProductControllerImpl implements ZaraController {
       );
 
       await this.zaraProductRepo.addOrUpdateZaraProduct(newProduct);
-      const cronExpression = "0 0 * * *";
+      const cronExpression = "*/5 * * * *";
       const schedule = new Schedule(
         uuidv4(),
         productUuid,
+        userUuid,
         cronExpression,
         undefined,
         new Date(),
         undefined,
         ScheduleState.Playing
       );
-      this.scheduleRepo.addSchedule(schedule);
+      await this.scheduleRepo.addSchedule(schedule);
+      await sendTelegramAlert(
+        userUuid,
+        `Nuevo producto añadido: ${newProduct.name}`
+      );
       return newProduct;
+    }
+  }
+
+  private availability(availability: string): string {
+    switch (availability) {
+      case StockState.Out_of_stock:
+        return "Sin stock";
+      case StockState.Low_on_stock:
+        return "Bajo stock";
+      case StockState.In_stock:
+        return "En stock";
+      default:
+        throw new Error("availability error");
     }
   }
 }
