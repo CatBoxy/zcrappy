@@ -31,10 +31,15 @@ type ColorData = {
 };
 
 interface ZaraController {
-  run(filename: string, query: string): Promise<Record<string, string>>;
+  run(
+    filename: string,
+    query: string,
+    scheduleId: string
+  ): Promise<Record<string, string>>;
   handleAddOrUpdateZaraProduct(
     userUuid: string,
-    productData: any
+    productData: any,
+    scheduleId: string
   ): Promise<ZaraProduct>;
 }
 
@@ -51,9 +56,9 @@ export default class ZaraProductControllerImpl implements ZaraController {
   public async run(
     fileName: string,
     userId: string,
+    scheduleId: string,
     query?: string
   ): Promise<Record<string, any>> {
-    console.log("ran schedule");
     let results;
     if (query) {
       results = await this.manager.runScript(fileName, [query]);
@@ -69,7 +74,11 @@ export default class ZaraProductControllerImpl implements ZaraController {
     const data = JSON.parse(results);
 
     try {
-      const product = await this.handleAddOrUpdateZaraProduct(userId, data);
+      const product = await this.handleAddOrUpdateZaraProduct(
+        userId,
+        data,
+        scheduleId
+      );
       return product.getData();
     } catch (error: any) {
       console.error("Error executing transaction:", error.message);
@@ -79,11 +88,12 @@ export default class ZaraProductControllerImpl implements ZaraController {
 
   public async handleAddOrUpdateZaraProduct(
     userUuid: string,
-    productData: any
+    productData: any,
+    scheduleId: string
   ): Promise<ZaraProduct> {
     const existingProduct = await this.zaraProductRepo.getProductDetails(
       userUuid,
-      productData.name
+      scheduleId
     );
 
     const arrivingProductColors: Set<string> = new Set(
@@ -144,11 +154,11 @@ export default class ZaraProductControllerImpl implements ZaraController {
               sizeData.availability !== StockState.Out_of_stock;
             if (isRestock) {
               availabilityChanges.push(
-                `Disponibilidad actualizada para producto: ${
+                `Nuevo stock para tu producto: ${
                   productData.name
                 }, para el talle: ${sizeData.name}, de color: ${
                   colorData.name
-                }, disponibilidad: ${this.availability(sizeData.availability)}`
+                }, stock: ${this.availability(sizeData.availability)}`
               );
             }
             existingSize.availability = sizeData.availability;
@@ -169,11 +179,24 @@ export default class ZaraProductControllerImpl implements ZaraController {
       await this.zaraProductRepo.addOrUpdateZaraProduct(existingProduct);
 
       if (newSizes.length > 0) {
-        await sendTelegramAlert(userUuid, newSizes.join("\n"));
+        try {
+          const result = await sendTelegramAlert(userUuid, newSizes.join("\n"));
+          console.log("Success:", result);
+        } catch (error: any) {
+          console.error("Error:", error.message);
+        }
       }
 
       if (availabilityChanges.length > 0) {
-        await sendTelegramAlert(userUuid, availabilityChanges.join("\n"));
+        try {
+          const result = await sendTelegramAlert(
+            userUuid,
+            availabilityChanges.join("\n")
+          );
+          console.log("Success:", result);
+        } catch (error: any) {
+          console.error("Error:", error.message);
+        }
       }
 
       return existingProduct;
@@ -210,26 +233,11 @@ export default class ZaraProductControllerImpl implements ZaraController {
             colorData.url,
             productUuid
           );
-        })
+        }),
+        scheduleId
       );
 
       await this.zaraProductRepo.addOrUpdateZaraProduct(newProduct);
-      const cronExpression = "*/5 * * * *";
-      const schedule = new Schedule(
-        uuidv4(),
-        productUuid,
-        userUuid,
-        cronExpression,
-        undefined,
-        new Date(),
-        undefined,
-        ScheduleState.Playing
-      );
-      await this.scheduleRepo.addSchedule(schedule);
-      await sendTelegramAlert(
-        userUuid,
-        `Nuevo producto añadido: ${newProduct.name}`
-      );
       return newProduct;
     }
   }

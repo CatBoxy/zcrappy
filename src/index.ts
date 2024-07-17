@@ -5,7 +5,6 @@ import zaraRouter from "./routes/zaraRouter";
 // import initializeSchedules from "./services/initializeSchedules";
 import cors from "cors";
 import { setupRealtime } from "./services/initializeSchedules";
-import { bot } from "./services/telegramBotService";
 
 dotenv.config();
 
@@ -25,5 +24,4 @@ app.use("/api", zaraRouter);
 app.listen(port, async () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
   await setupRealtime();
-  bot;
 });

@@ -1,63 +1,26 @@
-import TelegramBot from "node-telegram-bot-api";
-import { createClient } from "@supabase/supabase-js";
-
-const serviceKey: string = process.env.SERVICE_KEY!;
-const supabaseUrl: string = process.env.SUPABASE_URL!;
-const token = process.env.ZARADROPSBOT_TOKEN!;
-const telegramTokenTable: string = "Telegram_token";
-const userTable: string = "User";
-const supabase = createClient(supabaseUrl, serviceKey);
-
-export const bot = new TelegramBot(token, { polling: true });
-
-bot.onText(/\/start/, async (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from?.id;
-
-  const uniqueToken = generateUniqueToken();
-
-  const { data, error } = await supabase
-    .from(telegramTokenTable)
-    .insert([{ telegram_user_id: userId, token: uniqueToken }]);
-
-  if (error) {
-    if (error.code === "23505") {
-      bot.sendMessage(
-        chatId,
-        "Ya se ha enviado un código, por favor dirijase a nuestra pagina web para completar la configuracion de su cuenta."
-      );
-      return;
-    }
-    bot.sendMessage(
-      chatId,
-      "Ocurrio un error, por favor intente nuevamente mas tarde."
-    );
-    console.error(error);
-    return;
-  }
-
-  bot.sendMessage(
-    chatId,
-    `Por favor, ingrese el siguiente código en nuestro sitio web para vincular su cuenta de Telegram.: ${uniqueToken}`
-  );
-});
-
-function generateUniqueToken() {
-  return Math.random().toString(36).substr(2, 9);
-}
+const TELEGRAM_BOT_SERVICE_URL = "https://zcrappy-bot.onrender.com"; // Replace with your actual URL
 
 export const sendTelegramAlert = async (userId: string, message: string) => {
-  const { data, error } = await supabase
-    .from(userTable)
-    .select("telegram_id")
-    .eq("uuid", userId)
-    .single();
+  try {
+    const response = await fetch(`${TELEGRAM_BOT_SERVICE_URL}/send-alert`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ userId, message })
+    });
 
-  if (error || !data.telegram_id) {
-    console.error("Failed to retrieve Telegram ID");
-    return;
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Failed to send alert:", errorData);
+      throw new Error(`Failed to send alert: ${errorData.error}`);
+    }
+
+    const data = await response.json();
+    console.log("Alert sent successfully:", data);
+    return data;
+  } catch (error) {
+    console.error("Error sending alert:", error);
+    throw error;
   }
-
-  const telegramId = data.telegram_id;
-  bot.sendMessage(telegramId, message);
 };

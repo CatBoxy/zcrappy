@@ -109,15 +109,17 @@ export default class ZaraProduct {
   // public state;
   public userUuid;
   public colors;
+  public scheduleId;
 
   constructor(
     uuid: string,
-    name: string,
+    name: string | null | undefined,
     url: string,
     created: Date,
     // state: keyof typeof ScheduleState,
     userUuid: string,
-    colors: Array<Color>
+    colors: Array<Color>,
+    scheduleId: string
   ) {
     this.uuid = uuid;
     this.name = name;
@@ -126,6 +128,7 @@ export default class ZaraProduct {
     // this.state = state;
     this.userUuid = userUuid;
     this.colors = colors;
+    this.scheduleId = scheduleId;
   }
 
   public getData(): Record<string, any> {
@@ -136,7 +139,8 @@ export default class ZaraProduct {
       created: this.created,
       // state: this.state,
       userUuid: this.userUuid,
-      colors: this.colors
+      colors: this.colors,
+      scheduleId: this.scheduleId
     };
   }
 }

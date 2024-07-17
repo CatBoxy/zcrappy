@@ -23,11 +23,11 @@ interface ScheduledTaskEntry {
   uuid: string;
   created_at: string;
   deleted_at: string | null;
-  product_id: string;
   user_id: string;
   cron_expression: string;
   last_run: string | null;
   state: keyof typeof ScheduleState;
+  url: string;
 }
 
 let cronJobs: { [key: string]: ScheduledTask } = {};
@@ -104,7 +104,7 @@ const handleScheduleDelete = (payload: any): void => {
 
 const createOrUpdateCronJob = (schedule: ScheduledTaskEntry): void => {
   try {
-    const { uuid, cron_expression, state, product_id, user_id } = schedule;
+    const { uuid, cron_expression, state, user_id, url } = schedule;
 
     if (state === "Playing") {
       if (cronJobs[uuid]) {
@@ -113,17 +113,7 @@ const createOrUpdateCronJob = (schedule: ScheduledTaskEntry): void => {
 
       cronJobs[uuid] = cron.schedule(cron_expression, async () => {
         try {
-          const productDetails = await zaraProductRepo.getProductDetailsById(
-            product_id
-          );
-          if (productDetails) {
-            const productData = productDetails.getData();
-            await zaraProductController.run(
-              scrapingScript,
-              user_id,
-              productData.url
-            );
-          }
+          await zaraProductController.run(scrapingScript, user_id, uuid, url);
         } catch (error) {
           console.error(`Error executing job for schedule ID: ${uuid}`, error);
         }

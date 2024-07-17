@@ -101,7 +101,8 @@ export default class SupabaseZaraProductRepoImpl implements ZaraProductRepo {
             created_at: zaraProductData.created,
             name: zaraProductData.name,
             user_uuid: zaraProductData.userUuid,
-            url: zaraProductData.url
+            url: zaraProductData.url,
+            schedule_id: zaraProductData.scheduleId
           }
         ]);
 
@@ -157,14 +158,14 @@ export default class SupabaseZaraProductRepoImpl implements ZaraProductRepo {
 
   public async getProductDetails(
     userUuid: string,
-    name: string
+    scheduleId: string
   ): Promise<ZaraProduct | null> {
     try {
       const { data: productData, error: productError } = await this.supabase
         .from(this.productTable)
         .select("*")
         .eq("user_uuid", userUuid)
-        .eq("name", name)
+        .eq("schedule_id", scheduleId)
         .single();
 
       if (productError) {
@@ -238,7 +239,8 @@ export default class SupabaseZaraProductRepoImpl implements ZaraProductRepo {
           new Date(productData.created_at),
           // productData.state,
           productData.user_uuid,
-          colors
+          colors,
+          productData.schedule_id
         );
       }
 
@@ -329,7 +331,8 @@ export default class SupabaseZaraProductRepoImpl implements ZaraProductRepo {
           new Date(productData.created_at),
           // productData.state,
           productData.user_uuid,
-          colors
+          colors,
+          productData.schedule_id
         );
       }
 
