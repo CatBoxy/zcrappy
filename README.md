@@ -1,5 +1,3 @@
-# Project Setup Guide
-
 ## Project Introduction
 
 Zcrappy is a webscraping service that scrapes product data from an e-commerce site periodically through cron-jobs and sends alerts through telegram messages for every updated price and stock.
