@@ -2,13 +2,13 @@
 
 ## Project Introduction
 
-Welcome to our project! This is a Dockerized Express API for scraping MercadoLibre products and tracking their prices.
+Zcrappy is a webscraping service that scrapes product data from an e-commerce site periodically through cron-jobs and sends alerts through telegram messages for every updated price and stock.
 
 ## Tech Stack
 
 - Node.js
 - Express
-- PostgreSQL
+- Supabase
 - Docker
 - TypeScript
 - Python
@@ -30,12 +30,3 @@ docker-compose build
 ```bash
 docker-compose up
 ```
-
-3. Create a new PostgreSQL database using the configurations provided in the `.example.env` file.
-
-4. Allow CORS for the frontend updating the ORIGIN .env variable.
-
-## Additional Information
-
-For the frontend application, please refer to the repository at:
-[Frontend App Repository](https://github.com/CatBoxy/scrappy-front)
