@@ -2,7 +2,7 @@ const TELEGRAM_BOT_SERVICE_URL = "https://zcrappy-bot.onrender.com"; // Replace 
 
 export const sendTelegramAlert = async (userId: string, message: string) => {
   try {
-    const response = await fetch(`${TELEGRAM_BOT_SERVICE_URL}/send-alert`, {
+    const response = await fetch(`${TELEGRAM_BOT_SERVICE_URL}/api/send-alert`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
