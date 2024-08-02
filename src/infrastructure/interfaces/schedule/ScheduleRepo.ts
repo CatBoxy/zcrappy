@@ -10,7 +10,11 @@ export interface ScheduleRow {
 export interface ScheduleRepo {
   addSchedule(schedule: Schedule): Promise<void>;
 
-  updateLastRun(schedule: Schedule): Promise<void>;
+  updateLastRun(uuid: string): Promise<void>;
+
+  stopSchedule(uuid: string): Promise<void>;
+
+  stopScheduleError(uuid: string): Promise<void>;
 
   // getAllSchedules(): Promise<Array<ScheduleRow>>;
 }

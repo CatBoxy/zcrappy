@@ -34,10 +34,7 @@ let cronJobs: { [key: string]: ScheduledTask } = {};
 
 const scheduleRepo = new SupabaseScheduleRepoImpl();
 const zaraProductRepo = new SupabaseZaraProductRepoImpl();
-const zaraProductController = new ZaraProductControllerImpl(
-  zaraProductRepo,
-  scheduleRepo
-);
+const zaraProductController = new ZaraProductControllerImpl(zaraProductRepo);
 
 const setupRealtime = async (): Promise<void> => {
   try {
@@ -114,8 +111,11 @@ const createOrUpdateCronJob = (schedule: ScheduledTaskEntry): void => {
       cronJobs[uuid] = cron.schedule(cron_expression, async () => {
         try {
           await zaraProductController.run(scrapingScript, user_id, uuid, url);
+          await scheduleRepo.updateLastRun(uuid);
         } catch (error) {
           console.error(`Error executing job for schedule ID: ${uuid}`, error);
+          await scheduleRepo.stopScheduleError(uuid);
+          deleteCronJob(uuid);
         }
       });
     } else {
