@@ -6,9 +6,6 @@ import ZaraProduct, {
 } from "../infrastructure/interfaces/zaraProduct/ZaraProduct";
 import { ZaraProductRepo } from "../infrastructure/interfaces/zaraProduct/ZaraProductRepo";
 import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
-import { ScheduleState } from "../enums/ScheduleState";
-import { ScheduleRepo } from "../infrastructure/interfaces/schedule/ScheduleRepo";
-import Schedule from "../infrastructure/interfaces/schedule/Schedule";
 import { sendTelegramAlert } from "../services/telegramBotService";
 import { StockState } from "../enums/StockState";
 
@@ -33,51 +30,47 @@ type ColorData = {
 interface ZaraController {
   run(
     filename: string,
-    query: string,
-    scheduleId: string
+    userId: string,
+    scheduleId: string,
+    url: string
   ): Promise<Record<string, string>>;
   handleAddOrUpdateZaraProduct(
     userUuid: string,
     productData: any,
-    scheduleId: string
+    scheduleId: string,
+    url: string
   ): Promise<ZaraProduct>;
 }
 
 export default class ZaraProductControllerImpl implements ZaraController {
   private manager = new ScriptManagerImpl();
   private zaraProductRepo: ZaraProductRepo;
-  private scheduleRepo: ScheduleRepo;
 
-  constructor(zaraProductRepo: ZaraProductRepo, scheduleRepo: ScheduleRepo) {
+  constructor(zaraProductRepo: ZaraProductRepo) {
     this.zaraProductRepo = zaraProductRepo;
-    this.scheduleRepo = scheduleRepo;
   }
 
   public async run(
     fileName: string,
     userId: string,
     scheduleId: string,
-    query?: string
+    url: string
   ): Promise<Record<string, any>> {
-    let results;
-    if (query) {
-      results = await this.manager.runScript(fileName, [query]);
-    } else {
-      results = await this.manager.runScript(fileName);
-    }
+    let results = await this.manager.runScript(fileName, [url]);
     if (!results) {
       console.log("Failed to get script results");
       throw new Error(
         "ZaraProduct controller error: Failed to get script results"
       );
     }
-    const data = JSON.parse(results);
 
     try {
+      const data = JSON.parse(results);
       const product = await this.handleAddOrUpdateZaraProduct(
         userId,
         data,
-        scheduleId
+        scheduleId,
+        url
       );
       return product.getData();
     } catch (error: any) {
@@ -89,7 +82,8 @@ export default class ZaraProductControllerImpl implements ZaraController {
   public async handleAddOrUpdateZaraProduct(
     userUuid: string,
     productData: any,
-    scheduleId: string
+    scheduleId: string,
+    url: string
   ): Promise<ZaraProduct> {
     const existingProduct = await this.zaraProductRepo.getProductDetails(
       userUuid,
@@ -144,21 +138,28 @@ export default class ZaraProductControllerImpl implements ZaraController {
             newSizes.push(
               `Nuevo talle añadido: ${sizeData.name} para el producto: ${
                 productData.name
-              }, color: ${colorData.name}, disponibilidad: ${this.availability(
+              }, color: ${colorData.name}, stock: ${this.availability(
                 sizeData.availability
-              )}`
+              )}, url: ${url}`
             );
           } else {
             const isRestock =
               existingSize.availability === StockState.Out_of_stock &&
               sizeData.availability !== StockState.Out_of_stock;
             if (isRestock) {
+              console.log(
+                "existingSize.availability",
+                existingSize.availability
+              );
+              console.log("sizeData.availability", sizeData.availability);
               availabilityChanges.push(
                 `Nuevo stock para tu producto: ${
                   productData.name
                 }, para el talle: ${sizeData.name}, de color: ${
                   colorData.name
-                }, stock: ${this.availability(sizeData.availability)}`
+                }, stock: ${this.availability(
+                  sizeData.availability
+                )}, url: ${url}`
               );
             }
             existingSize.availability = sizeData.availability;
@@ -181,6 +182,7 @@ export default class ZaraProductControllerImpl implements ZaraController {
       if (newSizes.length > 0) {
         try {
           const result = await sendTelegramAlert(userUuid, newSizes.join("\n"));
+          console.log("newSizes added", newSizes);
           console.log("Success:", result);
         } catch (error: any) {
           console.error("Error:", error.message);
@@ -193,6 +195,7 @@ export default class ZaraProductControllerImpl implements ZaraController {
             userUuid,
             availabilityChanges.join("\n")
           );
+          console.log("availabilityChanges", availabilityChanges);
           console.log("Success:", result);
         } catch (error: any) {
           console.error("Error:", error.message);
@@ -205,7 +208,7 @@ export default class ZaraProductControllerImpl implements ZaraController {
       const newProduct = new ZaraProduct(
         productUuid,
         productData.name,
-        productData.colors[0].url,
+        url,
         productData.created,
         userUuid,
         productData.colors.map((colorData: ColorData) => {
