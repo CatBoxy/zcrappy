@@ -50,17 +50,23 @@ def extract_product_info(url):
             r.raise_for_status()
             html = r.content
             # extract `i`, `j` and `bm-verify`
-            i = re.search(rb'var i = (\d+)', html)[1]
-            j = re.search(rb'var j = i [+] Number[(]"(\d+)" [+] "(\d+)"[)]', html)
-            j = j[1] + j[2]
-            payload = {
-                'bm-verify': re.search(rb'"bm-verify"\s*:\s*"([^"]+)', html)[1].decode(),
-                'pow': int(i) + int(j)
-            }
-            rr = session.post(sec, cookies=r.cookies, json=payload, headers=headers)
-            rrr = session.get(url, cookies=rr.cookies, headers=headers)
-            finalHtml = rrr.content
-            soup = BeautifulSoup(finalHtml, 'html.parser')
+            i_match = re.search(rb'var i = (\d+)', html)
+            j_match = re.search(rb'var j = i [+] Number[(]"(\d+)" [+] "(\d+)"[)]', html)
+
+            if i_match and j_match:
+                i = i_match[1]
+                j = j_match[1] + j_match[2]
+                payload = {
+                    'bm-verify': re.search(rb'"bm-verify"\s*:\s*"([^"]+)', html)[1].decode(),
+                    'pow': int(i) + int(j)
+                }
+                rr = session.post(sec, cookies=r.cookies, json=payload, headers=headers)
+                rrr = session.get(url, cookies=rr.cookies, headers=headers)
+                finalHtml = rrr.content
+                soup = BeautifulSoup(finalHtml, 'html.parser')
+            else:
+                # If the necessary variables are not found, use the initial HTML content
+                soup = BeautifulSoup(html, 'html.parser')
             product_script = soup.find('script', {'type': 'application/ld+json'})
             links = {}
             if product_script:
