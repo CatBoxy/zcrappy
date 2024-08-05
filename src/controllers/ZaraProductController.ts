@@ -9,37 +9,13 @@ import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
 import { sendTelegramAlert } from "../services/telegramBotService";
 import { StockState } from "../enums/StockState";
 
-type SizeData = {
-  name: string;
-  availability: string;
-  created: Date;
-  oldPrice: number;
-  price: number;
-  discountPercentage: string;
-};
-
-type ColorData = {
-  name: string;
-  hexCode: string;
-  created: Date;
-  sizes: SizeData[];
-  image: string;
-  url: string;
-};
-
 interface ZaraController {
   run(
     filename: string,
     userId: string,
     scheduleId: string,
     url: string
-  ): Promise<Record<string, string>>;
-  handleAddOrUpdateZaraProduct(
-    userUuid: string,
-    productData: any,
-    scheduleId: string,
-    url: string
-  ): Promise<ZaraProduct>;
+  ): Promise<void>;
 }
 
 export default class ZaraProductControllerImpl implements ZaraController {
@@ -55,7 +31,7 @@ export default class ZaraProductControllerImpl implements ZaraController {
     userId: string,
     scheduleId: string,
     url: string
-  ): Promise<Record<string, any>> {
+  ): Promise<void> {
     let results = await this.manager.runScript(fileName, [url]);
     if (!results) {
       console.log("Failed to get script results");
@@ -66,183 +42,133 @@ export default class ZaraProductControllerImpl implements ZaraController {
 
     try {
       const data = JSON.parse(results);
-      const product = await this.handleAddOrUpdateZaraProduct(
-        userId,
+      const arrivingProduct = this.buildZaraProduct(
         data,
+        userId,
         scheduleId,
         url
       );
-      return product.getData();
+      const existingProduct = await this.zaraProductRepo.getProductDetails(
+        userId,
+        scheduleId
+      );
+      if (existingProduct) {
+        if (!arrivingProduct.isEqual(existingProduct)) {
+          console.log("NOT THE SAME");
+          console.log("EXISTING PRODUCT:", existingProduct.getData());
+          console.log("ARRIVING PRODUCT:", arrivingProduct.getData());
+          const diffs = existingProduct.getDifferences(arrivingProduct);
+          console.log(JSON.stringify(diffs, null, 2));
+
+          const { updatedProduct, notifications } = this.updateExistingProduct(
+            existingProduct,
+            arrivingProduct
+          );
+
+          await this.zaraProductRepo.addOrUpdateZaraProduct(updatedProduct);
+          if (notifications.length > 0) {
+            const result = await sendTelegramAlert(
+              userId,
+              notifications.join("\n")
+            );
+            console.log("notifications", notifications);
+            console.log("Success:", result);
+          }
+        }
+      } else {
+        await this.zaraProductRepo.addOrUpdateZaraProduct(arrivingProduct);
+      }
     } catch (error: any) {
       console.error("Error executing transaction:", error.message);
       throw new Error("ZaraProduct controller error: " + error.message);
     }
   }
 
-  public async handleAddOrUpdateZaraProduct(
-    userUuid: string,
-    productData: any,
-    scheduleId: string,
-    url: string
-  ): Promise<ZaraProduct> {
-    const existingProduct = await this.zaraProductRepo.getProductDetails(
-      userUuid,
-      scheduleId
-    );
+  private updateExistingProduct(
+    existingProduct: ZaraProduct,
+    arrivingProduct: ZaraProduct
+  ): { updatedProduct: ZaraProduct; notifications: string[] } {
+    const differences = existingProduct.getDifferences(arrivingProduct);
+    const notifications: string[] = [];
 
-    const arrivingProductColors: Set<string> = new Set(
-      productData.colors.map((color: ColorData) => color.name)
-    );
+    // Add new colors
+    existingProduct.colors.push(...differences.newColors);
 
-    if (existingProduct) {
-      let availabilityChanges: string[] = [];
-      let newSizes: string[] = [];
-
-      for (const colorData of productData.colors) {
-        let existingColor = existingProduct.colors.find(
-          (color) => color.name === colorData.name
+    // Update removed colors
+    for (const removedColor of differences.removedColors) {
+      const existingColor = existingProduct.colors.find(
+        (c) => c.name === removedColor.name
+      );
+      if (existingColor) {
+        existingColor.sizes.forEach(
+          (size) => (size.availability = StockState.Out_of_stock)
         );
+      }
+    }
 
-        if (!existingColor) {
-          existingColor = new Color(
-            uuidv4(),
-            colorData.name,
-            colorData.hexCode,
-            colorData.created,
-            [],
-            colorData.image,
-            colorData.url,
-            existingProduct.uuid
+    // Update color differences
+    for (const colorDiff of differences.colorDifferences) {
+      const existingColor = existingProduct.colors.find(
+        (c) => c.name === colorDiff.name
+      );
+      if (existingColor) {
+        for (const sizeDiff of colorDiff.sizeDifferences) {
+          const existingSize = existingColor.sizes.find(
+            (s) => s.name === sizeDiff.name
           );
-          existingProduct.colors.push(existingColor);
-        }
+          if (existingSize) {
+            existingSize.availability = sizeDiff.newAvailability;
+            existingSize.price = sizeDiff.newPrice;
+            existingSize.oldPrice = sizeDiff.newOldPrice;
+            existingSize.discountPercentage = sizeDiff.newDiscountPercentage;
 
-        for (const sizeData of colorData.sizes) {
-          let existingSize = existingColor.sizes.find(
-            (size) => size.name === sizeData.name
-          );
-
-          if (!existingSize) {
-            existingSize = new Size(
-              uuidv4(),
-              sizeData.name,
-              sizeData.availability,
-              colorData.created,
-              sizeData.oldPrice,
-              sizeData.price,
-              sizeData.discountPercentage,
-              existingColor.uuid,
-              existingProduct.uuid
-            );
-            existingColor.sizes.push(existingSize);
-            newSizes.push(
-              `Nuevo talle añadido: ${sizeData.name} para el producto: ${
-                productData.name
-              }, color: ${colorData.name}, stock: ${this.availability(
-                sizeData.availability
-              )}, url: ${url}`
-            );
-          } else {
-            const isRestock =
-              existingSize.availability === StockState.Out_of_stock &&
-              sizeData.availability !== StockState.Out_of_stock;
-            if (isRestock) {
-              console.log(
-                "existingSize.availability",
-                existingSize.availability
-              );
-              console.log("sizeData.availability", sizeData.availability);
-              availabilityChanges.push(
+            if (
+              sizeDiff.oldAvailability === StockState.Out_of_stock &&
+              (sizeDiff.newAvailability === StockState.In_stock ||
+                sizeDiff.newAvailability === StockState.Low_on_stock)
+            ) {
+              notifications.push(
                 `Nuevo stock para tu producto: ${
-                  productData.name
-                }, para el talle: ${sizeData.name}, de color: ${
-                  colorData.name
+                  existingProduct.name
+                }, para el talle: ${sizeDiff.name}, de color: ${
+                  colorDiff.name
                 }, stock: ${this.availability(
-                  sizeData.availability
-                )}, url: ${url}`
+                  sizeDiff.newAvailability
+                )}, precio: ${sizeDiff.newPrice}, url: ${existingProduct.url}`
               );
             }
-            existingSize.availability = sizeData.availability;
-            existingSize.oldPrice = sizeData.oldPrice;
-            existingSize.price = sizeData.price;
-            existingSize.discountPercentage = sizeData.discountPercentage;
+
+            if (sizeDiff.oldPrice !== sizeDiff.newPrice) {
+              notifications.push(`Cambio de precio para tu producto: ${existingProduct.name}, talle: ${sizeDiff.name}, color: ${colorDiff.name},
+              precio anterior: ${sizeDiff.oldPrice}, nuevo precio: ${sizeDiff.newPrice}, url: ${existingProduct.url}`);
+            }
+          } else {
+            existingColor.sizes.push(
+              new Size(
+                uuidv4(),
+                sizeDiff.name,
+                sizeDiff.newAvailability,
+                new Date(),
+                sizeDiff.newOldPrice,
+                sizeDiff.newPrice,
+                sizeDiff.newDiscountPercentage,
+                existingColor.uuid,
+                existingProduct.uuid
+              )
+            );
+            notifications.push(
+              `Nuevo talle añadido: ${sizeDiff.name} para el producto: ${
+                existingProduct.name
+              }, color: ${colorDiff.name}, stock: ${this.availability(
+                sizeDiff.newAvailability
+              )}, precio: ${sizeDiff.newPrice}, url: ${existingProduct.url}`
+            );
           }
         }
       }
-      for (const existingColor of existingProduct.colors) {
-        if (!arrivingProductColors.has(existingColor.name)) {
-          for (const existingSize of existingColor.sizes) {
-            existingSize.availability = StockState.Out_of_stock;
-          }
-        }
-      }
-
-      await this.zaraProductRepo.addOrUpdateZaraProduct(existingProduct);
-
-      if (newSizes.length > 0) {
-        try {
-          const result = await sendTelegramAlert(userUuid, newSizes.join("\n"));
-          console.log("newSizes added", newSizes);
-          console.log("Success:", result);
-        } catch (error: any) {
-          console.error("Error:", error.message);
-        }
-      }
-
-      if (availabilityChanges.length > 0) {
-        try {
-          const result = await sendTelegramAlert(
-            userUuid,
-            availabilityChanges.join("\n")
-          );
-          console.log("availabilityChanges", availabilityChanges);
-          console.log("Success:", result);
-        } catch (error: any) {
-          console.error("Error:", error.message);
-        }
-      }
-
-      return existingProduct;
-    } else {
-      const productUuid = uuidv4();
-      const newProduct = new ZaraProduct(
-        productUuid,
-        productData.name,
-        url,
-        productData.created,
-        userUuid,
-        productData.colors.map((colorData: ColorData) => {
-          const colorUuid = uuidv4();
-          return new Color(
-            colorUuid,
-            colorData.name,
-            colorData.hexCode,
-            colorData.created,
-            colorData.sizes.map((sizeData: SizeData) => {
-              const sizeUuid = uuidv4();
-              return new Size(
-                sizeUuid,
-                sizeData.name,
-                sizeData.availability,
-                sizeData.created,
-                sizeData.oldPrice,
-                sizeData.price,
-                sizeData.discountPercentage,
-                colorUuid,
-                productUuid
-              );
-            }),
-            colorData.image,
-            colorData.url,
-            productUuid
-          );
-        }),
-        scheduleId
-      );
-
-      await this.zaraProductRepo.addOrUpdateZaraProduct(newProduct);
-      return newProduct;
     }
+
+    return { updatedProduct: existingProduct, notifications };
   }
 
   private availability(availability: string): string {
@@ -256,5 +182,48 @@ export default class ZaraProductControllerImpl implements ZaraController {
       default:
         throw new Error("availability error");
     }
+  }
+
+  private buildZaraProduct(
+    data: any,
+    userId: string,
+    scheduleId: string,
+    url: string
+  ): ZaraProduct {
+    const productUuid = uuidv4();
+    return new ZaraProduct(
+      productUuid,
+      data.name ?? null,
+      url ?? null,
+      new Date(data.created) ?? null,
+      userId ?? null,
+      (data.colors ?? []).map((colorData: any) => {
+        const colorUuid = uuidv4();
+        return new Color(
+          colorUuid,
+          colorData.name ?? null,
+          colorData.hexCode ?? null,
+          new Date(colorData.created) ?? null,
+          (colorData.sizes ?? []).map((sizeData: any) => {
+            const sizeUuid = uuidv4();
+            return new Size(
+              sizeUuid,
+              sizeData.name ?? null,
+              sizeData.availability ?? null,
+              new Date(sizeData.created) ?? null,
+              sizeData.oldPrice ?? null,
+              sizeData.price ?? null,
+              sizeData.discountPercentage ?? null,
+              colorUuid,
+              productUuid
+            );
+          }),
+          colorData.image ?? null,
+          colorData.url ?? null,
+          productUuid
+        );
+      }),
+      scheduleId ?? null
+    );
   }
 }
