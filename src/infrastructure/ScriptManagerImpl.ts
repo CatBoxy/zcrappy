@@ -20,7 +20,6 @@ class ScriptManagerImpl implements ScriptManager {
     return new Promise<string>((resolve, reject) => {
       PythonShell.run(scriptFileName, optionsWithArgs)
         .then((results: any) => {
-          console.log("results: %j", results);
           resolve(results);
         })
         .catch((err: any) => {
