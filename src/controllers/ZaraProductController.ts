@@ -53,12 +53,9 @@ export default class ZaraProductControllerImpl implements ZaraController {
         scheduleId
       );
       if (existingProduct) {
-        if (!arrivingProduct.isEqual(existingProduct)) {
-          console.log("NOT THE SAME");
-          console.log("EXISTING PRODUCT:", existingProduct.getData());
-          console.log("ARRIVING PRODUCT:", arrivingProduct.getData());
-          const diffs = existingProduct.getDifferences(arrivingProduct);
-          console.log(JSON.stringify(diffs, null, 2));
+        if (!existingProduct.isEqual(arrivingProduct)) {
+          console.log("Not equal:", existingProduct.getData().name);
+          console.log(existingProduct.getData().url);
 
           const { updatedProduct, notifications } = this.updateExistingProduct(
             existingProduct,
@@ -89,6 +86,7 @@ export default class ZaraProductControllerImpl implements ZaraController {
     arrivingProduct: ZaraProduct
   ): { updatedProduct: ZaraProduct; notifications: string[] } {
     const differences = existingProduct.getDifferences(arrivingProduct);
+    console.log(JSON.stringify(differences, null, 2));
     const notifications: string[] = [];
 
     // Add new colors
@@ -100,9 +98,10 @@ export default class ZaraProductControllerImpl implements ZaraController {
         (c) => c.name === removedColor.name
       );
       if (existingColor) {
-        existingColor.sizes.forEach(
-          (size) => (size.availability = StockState.Out_of_stock)
-        );
+        existingColor.sizes.forEach((size) => {
+          size.availability = StockState.Out_of_stock;
+          size.restockConfirmationCount = 0;
+        });
       }
     }
 
@@ -117,52 +116,57 @@ export default class ZaraProductControllerImpl implements ZaraController {
             (s) => s.name === sizeDiff.name
           );
           if (existingSize) {
-            existingSize.availability = sizeDiff.newAvailability;
-            existingSize.price = sizeDiff.newPrice;
-            existingSize.oldPrice = sizeDiff.newOldPrice;
-            existingSize.discountPercentage = sizeDiff.newDiscountPercentage;
-
-            if (
-              sizeDiff.oldAvailability === StockState.Out_of_stock &&
+            if (sizeDiff.newAvailability === StockState.Out_of_stock) {
+              existingSize.restockConfirmationCount = 0;
+            } else if (
+              existingSize.availability === StockState.Out_of_stock &&
               (sizeDiff.newAvailability === StockState.In_stock ||
                 sizeDiff.newAvailability === StockState.Low_on_stock)
             ) {
+              existingSize.restockConfirmationCount++;
+            } else if (
+              sizeDiff.newAvailability === StockState.In_stock ||
+              sizeDiff.newAvailability === StockState.Low_on_stock
+            ) {
+              existingSize.restockConfirmationCount++;
+            }
+
+            if (existingSize.restockConfirmationCount >= 2) {
               notifications.push(
-                `Nuevo stock para tu producto: ${
+                `Nuevo stock confirmado para tu producto: ${
                   existingProduct.name
                 }, para el talle: ${sizeDiff.name}, de color: ${
                   colorDiff.name
                 }, stock: ${this.availability(
                   sizeDiff.newAvailability
-                )}, precio: ${sizeDiff.newPrice}, url: ${existingProduct.url}`
+                )}, precio: $${sizeDiff.newPrice}, url: ${existingProduct.url}`
               );
+              existingSize.restockConfirmationCount = 0;
             }
+
+            existingSize.availability = sizeDiff.newAvailability;
+            existingSize.price = sizeDiff.newPrice;
+            existingSize.oldPrice = sizeDiff.newOldPrice;
+            existingSize.discountPercentage = sizeDiff.newDiscountPercentage;
 
             if (sizeDiff.oldPrice !== sizeDiff.newPrice) {
               notifications.push(`Cambio de precio para tu producto: ${existingProduct.name}, talle: ${sizeDiff.name}, color: ${colorDiff.name},
               precio anterior: ${sizeDiff.oldPrice}, nuevo precio: ${sizeDiff.newPrice}, url: ${existingProduct.url}`);
             }
           } else {
-            existingColor.sizes.push(
-              new Size(
-                uuidv4(),
-                sizeDiff.name,
-                sizeDiff.newAvailability,
-                new Date(),
-                sizeDiff.newOldPrice,
-                sizeDiff.newPrice,
-                sizeDiff.newDiscountPercentage,
-                existingColor.uuid,
-                existingProduct.uuid
-              )
+            const newSize = new Size(
+              uuidv4(),
+              sizeDiff.name,
+              sizeDiff.newAvailability,
+              new Date(),
+              sizeDiff.newOldPrice,
+              sizeDiff.newPrice,
+              sizeDiff.newDiscountPercentage,
+              existingColor.uuid,
+              existingProduct.uuid
             );
-            notifications.push(
-              `Nuevo talle añadido: ${sizeDiff.name} para el producto: ${
-                existingProduct.name
-              }, color: ${colorDiff.name}, stock: ${this.availability(
-                sizeDiff.newAvailability
-              )}, precio: ${sizeDiff.newPrice}, url: ${existingProduct.url}`
-            );
+            newSize.restockConfirmationCount = 1;
+            existingColor.sizes.push(newSize);
           }
         }
       }
@@ -215,7 +219,8 @@ export default class ZaraProductControllerImpl implements ZaraController {
               sizeData.price ?? null,
               sizeData.discountPercentage ?? null,
               colorUuid,
-              productUuid
+              productUuid,
+              sizeData.restockConfirmationCount ?? 0
             );
           }),
           colorData.image ?? null,

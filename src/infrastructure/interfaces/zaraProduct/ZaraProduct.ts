@@ -77,6 +77,7 @@ export class Size {
   public discountPercentage;
   public colorId: string;
   public productId: string;
+  public restockConfirmationCount: number;
 
   constructor(
     uuid: string,
@@ -87,7 +88,8 @@ export class Size {
     price: number,
     discountPercentage: string,
     colorId: string,
-    productId: string
+    productId: string,
+    restockConfirmationCount: number = 0
   ) {
     this.uuid = uuid;
     this.name = name;
@@ -98,6 +100,7 @@ export class Size {
     this.discountPercentage = discountPercentage;
     this.colorId = colorId;
     this.productId = productId;
+    this.restockConfirmationCount = restockConfirmationCount || 0;
   }
 }
 
@@ -111,6 +114,8 @@ interface SizeDifference {
   newOldPrice: number;
   oldDiscountPercentage: string;
   newDiscountPercentage: string;
+  oldRestockConfirmationCount: number;
+  newRestockConfirmationCount: number;
 }
 
 interface ColorDifference {
@@ -181,7 +186,9 @@ export default class ZaraProduct {
           thisSize.availability !== otherSize.availability ||
           thisSize.price !== otherSize.price ||
           thisSize.oldPrice !== otherSize.oldPrice ||
-          thisSize.discountPercentage !== otherSize.discountPercentage
+          thisSize.discountPercentage !== otherSize.discountPercentage ||
+          thisSize.restockConfirmationCount !==
+            otherSize.restockConfirmationCount
         ) {
           return false;
         }
@@ -225,7 +232,9 @@ export default class ZaraProduct {
             (thisSize.availability !== otherSize.availability ||
               thisSize.price !== otherSize.price ||
               thisSize.oldPrice !== otherSize.oldPrice ||
-              thisSize.discountPercentage !== otherSize.discountPercentage)
+              thisSize.discountPercentage !== otherSize.discountPercentage ||
+              thisSize.restockConfirmationCount !==
+                otherSize.restockConfirmationCount)
           ) {
             colorDiff.sizeDifferences.push({
               name: thisSize.name,
@@ -236,7 +245,9 @@ export default class ZaraProduct {
               oldOldPrice: thisSize.oldPrice,
               newOldPrice: otherSize.oldPrice,
               oldDiscountPercentage: thisSize.discountPercentage,
-              newDiscountPercentage: otherSize.discountPercentage
+              newDiscountPercentage: otherSize.discountPercentage,
+              oldRestockConfirmationCount: thisSize.restockConfirmationCount,
+              newRestockConfirmationCount: otherSize.restockConfirmationCount
             });
           } else if (!otherSize) {
             colorDiff.sizeDifferences.push({
@@ -248,7 +259,9 @@ export default class ZaraProduct {
               oldOldPrice: thisSize.oldPrice,
               newOldPrice: 0,
               oldDiscountPercentage: thisSize.discountPercentage,
-              newDiscountPercentage: "0%"
+              newDiscountPercentage: "0%",
+              oldRestockConfirmationCount: thisSize.restockConfirmationCount,
+              newRestockConfirmationCount: 0
             });
           }
         }
@@ -264,7 +277,9 @@ export default class ZaraProduct {
               oldOldPrice: 0,
               newOldPrice: otherSize.oldPrice,
               oldDiscountPercentage: "0%",
-              newDiscountPercentage: otherSize.discountPercentage
+              newDiscountPercentage: otherSize.discountPercentage,
+              oldRestockConfirmationCount: 0,
+              newRestockConfirmationCount: otherSize.restockConfirmationCount
             });
           }
         }

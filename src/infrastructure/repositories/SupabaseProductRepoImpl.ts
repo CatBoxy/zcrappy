@@ -142,7 +142,8 @@ export default class SupabaseZaraProductRepoImpl implements ZaraProductRepo {
                 price: size.price,
                 discount_percentage: size.discountPercentage,
                 color_id: color.uuid,
-                product_id: zaraProductData.uuid
+                product_id: zaraProductData.uuid,
+                restock_confirmation_count: size.restockConfirmationCount
               }
             ]);
 
@@ -227,7 +228,8 @@ export default class SupabaseZaraProductRepoImpl implements ZaraProductRepo {
                 size.price,
                 size.discount_percentage,
                 size.color_id,
-                size.product_id
+                size.product_id,
+                size.restock_confirmation_count ?? 0
               )
           );
         }
@@ -237,7 +239,6 @@ export default class SupabaseZaraProductRepoImpl implements ZaraProductRepo {
           productData.name,
           productData.url,
           new Date(productData.created_at),
-          // productData.state,
           productData.user_uuid,
           colors,
           productData.schedule_id
@@ -319,7 +320,8 @@ export default class SupabaseZaraProductRepoImpl implements ZaraProductRepo {
                 size.price,
                 size.discount_percentage,
                 size.color_id,
-                size.product_id
+                size.product_id,
+                size.restock_confirmation_count ?? 0
               )
           );
         }
@@ -329,7 +331,6 @@ export default class SupabaseZaraProductRepoImpl implements ZaraProductRepo {
           productData.name,
           productData.url,
           new Date(productData.created_at),
-          // productData.state,
           productData.user_uuid,
           colors,
           productData.schedule_id
