@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import ZaraProduct, {
   Color,
-  Size
+  Size,
 } from "../infrastructure/interfaces/zaraProduct/ZaraProduct";
 import { ZaraProductRepo } from "../infrastructure/interfaces/zaraProduct/ZaraProductRepo";
 import ScriptManagerImpl from "../infrastructure/ScriptManagerImpl";
@@ -131,7 +131,7 @@ export default class ZaraProductControllerImpl implements ZaraController {
               existingSize.restockConfirmationCount++;
             }
 
-            if (existingSize.restockConfirmationCount >= 2) {
+            if (existingSize.restockConfirmationCount >= 3) {
               notifications.push(
                 `Nuevo stock confirmado para tu producto: ${
                   existingProduct.name
